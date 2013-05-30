@@ -5,15 +5,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"log"
-  "os"
-//	"github.com/realistschuckle/gohaml"
+    "os"
+    "github.com/realistschuckle/gohaml"
 )
 
 const debug debugging = true // or flip to false
 
 type debugging bool
 
-type content [] byte
+type content []byte
 
 func (d debugging) Print(content string) {
         if d {
@@ -28,13 +28,35 @@ func (d debugging) Printf(format string, args ...interface{}) {
         }
 }
 
+type TimeSpan struct {
+  name string
+  duration int
+  selected bool
+}
 
+func (t TimeSpan) HtmlProperties() map[string]interface{} {
+  var ret = make(map[string]interface{})
+  if t.selected {
+    ret["selected"] = "selected"
+  }
+  return ret
+}
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
   if !publicHandler(w, r) {
     // Main Router
     if r.URL.Path == "/" {
-      fmt.Fprintf(w, "<h1>Home</h1>")
+      var scope = make(map[string]interface{})
+      scope["code"] = ""
+      scope["snippet"] = "Copie Priv&eacute;e is a new kind of paste website. It will try to auto-detect the language you're pasting."
+      content, err := ioutil.ReadFile("views/index.haml")
+      if err == nil {
+        engine, _ := gohaml.NewEngine(string(content))
+        output := engine.Render(scope)
+        fmt.Fprintf(w, output) // Prints "I love HAML!"
+      } else {
+        log.Fatal(err)
+      }
     }
   }
 }
