@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 const debug debugging = true // or flip to false
@@ -41,6 +42,7 @@ func (t TimeSpan) HtmlProperties() map[string]interface{} {
 }
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	if !publicHandler(w, r) {
 		// Main Router
 		if r.URL.Path == "/" {
@@ -57,11 +59,12 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	duration := time.Now().Sub(startTime)
+	debug.Printf("%v - %s - %s %s - %v ", startTime, r.RemoteAddr, r.Method, r.URL.Path, duration)
 }
 
 func publicHandler(w http.ResponseWriter, r *http.Request) bool {
 	path := "data" + r.URL.Path
-	debug.Print(path)
 	_, err := os.Stat(path)
 	if err == nil {
 		body, err := ioutil.ReadFile(path)
