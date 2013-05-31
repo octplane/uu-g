@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/realistschuckle/gohaml"
 	"io/ioutil"
@@ -12,8 +13,6 @@ import (
 const debug debugging = true // or flip to false
 
 type debugging bool
-
-type content []byte
 
 func (d debugging) Print(content string) {
 	if d {
@@ -77,5 +76,8 @@ func publicHandler(w http.ResponseWriter, r *http.Request) bool {
 
 func main() {
 	http.HandleFunc("/", mainHandler)
-	http.ListenAndServe(":8080", nil)
+	var hostAndPort = flag.String("-listen", ":8080", "IP and port to listen to")
+	flag.Parse()
+	debug.Printf("Ready to serve at %s", *hostAndPort)
+	http.ListenAndServe(*hostAndPort, nil)
 }
