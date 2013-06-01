@@ -1,0 +1,50 @@
+{{ if .code }}
+%form.form-inline{ :id => "gluu_form", :method => 'POST', :action => '/'}
+  %button.btn.btn-primary{ :type => 'submit' }
+    %i.icon-file.icon-white
+    Gluu
+  / %button.btn.btn-mini.btn-primary.disabled
+  /   %i.icon-lock.icon-white
+  /   Encrypt
+  %span
+    Expiration
+    %label.checkbox
+      %input#never_expire{:type=>'checkbox',:name => 'never_expire'} Never
+    %select.span3#expiry_delay{:name => 'expiry_delay'}
+      - expiries.each do |ts|
+        %option{ts.html_properties}=ts.name
+  / %label.checkbox
+  /   %input.disabled{:type=>"checkbox"} Browsable
+  .row
+    .span12
+      %textarea{:id => 'clear_code', :style => 'width: 100%', :class => 'input-xlarge', :rows => '10'}= h @code
+{{ else }}
+  .row
+    .span12
+      This paste will
+      - if @never
+        never expire
+      - else
+        expire on #{@expire}
+      and is highlighted as 
+      %span.change_to#hljs_lang
+  .row
+    .span12
+      %pre
+        - if @code != nil
+          %code#code= h @code
+        - else
+          %code#code
+          %code#encrypted_code= h @encrypted_content
+      %pre{:style => 'display:none;'}
+        %code#spare
+  .row
+    .span12
+      Switch highlight to 
+      %div#placeholder (if you don't see anything here, you should enable javascript on your browser :D)
+    .span
+      Switch style to
+      %div#style-placeholder (if you don't see anything here either, your js is definitely not working :-O)
+{{ end }}
+%hr
+%div= haml :footer

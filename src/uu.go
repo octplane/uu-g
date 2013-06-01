@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/realistschuckle/gohaml"
+    "github.com/octplane/web"
+	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
-	"os"
-	"time"
+    "html/template"
+    "bytes"
 )
 
 const debug debugging = true // or flip to false
@@ -41,46 +41,34 @@ func (t TimeSpan) HtmlProperties() map[string]interface{} {
 	return ret
 }
 
-func mainHandler(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	if !publicHandler(w, r) {
-		// Main Router
-		if r.URL.Path == "/" {
-			var scope = make(map[string]interface{})
-			scope["code"] = ""
-			scope["snippet"] = "Copie Priv&eacute;e is a new kind of paste website. It will try to auto-detect the language you're pasting."
-			content, err := ioutil.ReadFile("views/index.haml")
-			if err == nil {
-				engine, _ := gohaml.NewEngine(string(content))
-				output := engine.Render(scope)
-				fmt.Fprintf(w, output) // Prints "I love HAML!"
-			} else {
-				log.Fatal(err)
-			}
-		}
+func slashHandler(ctxt *web.Context) {
+    // Main Router
+    var buf bytes.Buffer
+    var scope = make(map[string]interface{})
+    scope["code"] = ""
+    scope["snippet"] = "Copie Priv&eacute;e is a new kind of paste website. It will try to auto-detect the language you're pasting."
+    content, err := ioutil.ReadFile("views/index.haml.template")
+    if err == nil {
+        tmpl, err := template.New("layout").Parse(string(content))
+        if err != nil { panic(err) }
+        var templated bytes.Buffer 
+        err = tmpl.Execute(&templated, scope) 
+        if err != nil { panic(err) }
+        engine, _ := gohaml.NewEngine(templated.String())
+        output := engine.Render(scope)
+        buf.WriteString(output)
+    } else {
+        log.Fatal(err)
 	}
-	duration := time.Now().Sub(startTime)
-	debug.Printf("%v - %s - %s %s - %v ", startTime, r.RemoteAddr, r.Method, r.URL.Path, duration)
-}
-
-func publicHandler(w http.ResponseWriter, r *http.Request) bool {
-	path := "data" + r.URL.Path
-	_, err := os.Stat(path)
-	if err == nil {
-		body, err := ioutil.ReadFile(path)
-		if err != nil {
-			return false
-		}
-		w.Write(body)
-		return true
-	}
-	return false
+    io.Copy(ctxt, &buf)
 }
 
 func main() {
-	http.HandleFunc("/", mainHandler)
+    web.Config.StaticDir = "data"
+
 	var hostAndPort = flag.String("-listen", ":8080", "IP and port to listen to")
 	flag.Parse()
-	debug.Printf("Ready to serve at %s", *hostAndPort)
-	http.ListenAndServe(*hostAndPort, nil)
+
+    web.Get("/", slashHandler)
+    web.Run(*hostAndPort)
 }
