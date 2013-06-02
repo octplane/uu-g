@@ -22,20 +22,22 @@
   .row
     .span12
       This paste will
-      - if @never
-        never expire
-      - else
-        expire on #{@expire}
+{{ if .never }}
+      never expire
+{{ else }}
+      expire on #{@expire}
+{{ end }}
       and is highlighted as 
       %span.change_to#hljs_lang
   .row
     .span12
       %pre
-        - if @code != nil
-          %code#code= h @code
-        - else
-          %code#code
-          %code#encrypted_code= h @encrypted_content
+{{ if .code }}          
+        %code#code
+        %code#encrypted_code= h @encrypted_content
+{{ else }}          
+        %code#code= h @code
+{{ end }}
       %pre{:style => 'display:none;'}
         %code#spare
   .row

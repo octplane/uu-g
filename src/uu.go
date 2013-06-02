@@ -21,6 +21,9 @@ func (d debugging) Print(content string) {
 	}
 }
 
+var templates map[string]*template.Template = make( map[string]*template.Template)
+var DefaultLayout string = "layout"
+
 func (d debugging) Printf(format string, args ...interface{}) {
 	if d {
 		log.Printf(format, args...)
@@ -41,38 +44,77 @@ func (t TimeSpan) HtmlProperties() map[string]interface{} {
 	return ret
 }
 
+func haml(source string, scope map[string]interface{}) string {
+	return haml_with_layout(DefaultLayout, source, scope)
+}
+
+func haml_with_layout(layout string, source string, scope map[string]interface{}) string {
+	// render content
+	content, err := raw_haml(source, scope)
+	if err != nil { panic(err)}
+	scope["content"] = content
+
+	output, err := raw_haml(layout, scope)
+	if err != nil { panic(err)}
+	return output
+}
+
+func haml_helper(source string) (string, error) {
+	return raw_haml(source, nil)
+}
+
+func raw_haml(source string, scope map[string]interface{}) (string,error) {
+	var tmpl *template.Template
+	var err error
+	tmpl, exists := templates[source]
+	if !exists {
+		var content []byte
+		content, err = ioutil.ReadFile("views/" + source + ".haml.template")
+		debug.Printf("Reading %s from disk", source)
+		tmpl := template.New(source)
+		fMap := tmpl.FuncMap{ "haml" : haml_helper }
+		tmpl.Funcs(fMap)
+		templates[source] = tmpl
+	}
+	
+		parsed, err := Parse(string(content))
+		if err == nil {
+		} else {
+			debug.Printf("Missing %s on disk. Not cool... %v", source, err)
+			return "", err
+		}
+	}
+	var templated bytes.Buffer
+
+	err = tmpl.Execute(&templated, scope)
+	if err != nil {
+		return "", err
+	}
+
+	engine, err := gohaml.NewEngine(templated.String())
+	if err != nil { return "", err }
+
+	output := engine.Render(scope)
+	return output, nil
+}
+
 func slashHandler(ctxt *web.Context) {
 	// Main Router
 	var buf bytes.Buffer
 	var scope = make(map[string]interface{})
 	scope["code"] = ""
 	scope["snippet"] = "Copie Priv&eacute;e is a new kind of paste website. It will try to auto-detect the language you're pasting."
-	content, err := ioutil.ReadFile("views/index.haml.template")
-	if err == nil {
-		tmpl, err := template.New("layout").Parse(string(content))
-		if err != nil {
-			panic(err)
-		}
-		var templated bytes.Buffer
-		err = tmpl.Execute(&templated, scope)
-		if err != nil {
-			panic(err)
-		}
-		engine, _ := gohaml.NewEngine(templated.String())
-		output := engine.Render(scope)
-		buf.WriteString(output)
-	} else {
-		log.Fatal(err)
-	}
+	output := haml("index", scope)
+	buf.WriteString(output)
 	io.Copy(ctxt, &buf)
 }
 
 func main() {
 	web.Config.StaticDir = "data"
 
-	var hostAndPort = flag.String("-listen", ":8080", "IP and port to listen to")
-	flag.Parse()
+	var hostAndPort = flag.String("l", ":8080", "IP and port to listen to")
 
+	flag.Parse()
 	web.Get("/", slashHandler)
 	web.Run(*hostAndPort)
 }
