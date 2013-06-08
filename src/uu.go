@@ -21,7 +21,7 @@ func (d debugging) Print(content string) {
 	}
 }
 
-var templates map[string]*template.Template = make( map[string]*template.Template)
+var templates map[string]*template.Template = make(map[string]*template.Template)
 var DefaultLayout string = "layout"
 
 func (d debugging) Printf(format string, args ...interface{}) {
@@ -51,11 +51,15 @@ func haml(source string, scope map[string]interface{}) string {
 func haml_with_layout(layout string, source string, scope map[string]interface{}) string {
 	// render content
 	content, err := raw_haml(source, scope)
-	if err != nil { panic(err)}
+	if err != nil {
+		panic(err)
+	}
 	scope["content"] = content
 
 	output, err := raw_haml(layout, scope)
-	if err != nil { panic(err)}
+	if err != nil {
+		panic(err)
+	}
 	return output
 }
 
@@ -63,27 +67,21 @@ func haml_helper(source string) (string, error) {
 	return raw_haml(source, nil)
 }
 
-func raw_haml(source string, scope map[string]interface{}) (string,error) {
+func raw_haml(source string, scope map[string]interface{}) (string, error) {
 	var tmpl *template.Template
 	var err error
 	tmpl, exists := templates[source]
+
 	if !exists {
-		var content []byte
-		content, err = ioutil.ReadFile("views/" + source + ".haml.template")
+		var b []byte
+		b, err = ioutil.ReadFile("views/" + source + ".template")
 		debug.Printf("Reading %s from disk", source)
-		tmpl := template.New(source)
-		fMap := tmpl.FuncMap{ "haml" : haml_helper }
+		tmpl := template.New(string(b))
+		fMap := template.FuncMap{"haml": haml_helper}
 		tmpl.Funcs(fMap)
 		templates[source] = tmpl
 	}
-	
-		parsed, err := Parse(string(content))
-		if err == nil {
-		} else {
-			debug.Printf("Missing %s on disk. Not cool... %v", source, err)
-			return "", err
-		}
-	}
+
 	var templated bytes.Buffer
 
 	err = tmpl.Execute(&templated, scope)
@@ -92,7 +90,9 @@ func raw_haml(source string, scope map[string]interface{}) (string,error) {
 	}
 
 	engine, err := gohaml.NewEngine(templated.String())
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 
 	output := engine.Render(scope)
 	return output, nil
