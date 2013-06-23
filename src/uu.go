@@ -28,6 +28,13 @@ func (d debugging) Printf(format string, args ...interface{}) {
 	}
 }
 
+func (d debugging) InDebug() (bool) {
+	if d {
+		return true
+	}
+	return false
+}
+
 var templates map[string]*template.Template = make(map[string]*template.Template)
 var defaultLayoutName string = "layout"
 
@@ -37,24 +44,31 @@ type TimeSpan struct {
 	selected bool
 }
 
-func (t TimeSpan) HtmlProperties() map[string]interface{} {
-	var ret = make(map[string]interface{})
+var expiries = [...]TimeSpan{TimeSpan{"30 min", 1800, false},
+	TimeSpan{"1 day", 86400, false}}
+
+func (t TimeSpan) Name() string {
+	return t.name
+}
+
+func (t TimeSpan) Attributes() template.HTML {
 	if t.selected {
-		ret["selected"] = "selected"
+		return template.HTML("selected='selected'")
+	} else {
+		return template.HTML("")
 	}
-	return ret
 }
 
 func get_or_load(templateName string) *template.Template {
 	tmpl, exists := templates[templateName]
 
-	if !exists {
+	if debug.InDebug() || !exists {
 		var b []byte
 		cwd, err := os.Getwd()
 		if err != nil {
 			panic(err)
 		}
-		sourcePath := filepath.Join(cwd, "../views/"+templateName+".tmpl")
+		sourcePath := filepath.Join(cwd, "./views/"+templateName+".tmpl")
 		debug.Printf("Reading %s from disk", sourcePath)
 		b, err = ioutil.ReadFile(sourcePath)
 		if err != nil {
@@ -62,7 +76,7 @@ func get_or_load(templateName string) *template.Template {
 		}
 		tmpl = template.Must(template.New(templateName).Parse(string(b)))
 		debug.Printf("Template %s is ready %x", templateName, tmpl)
-		// fMap := template.FuncMap{"haml": haml_helper}
+		// fMap := template.FuncMap{"yield": yield_helper}
 		// tmpl.Funcs(fMap)
 		templates[templateName] = tmpl
 	}
@@ -89,7 +103,7 @@ func tmpl_with_layout(layoutName string, templateName string, context map[string
 	if err != nil {
 		panic(err)
 	}
-	context["content"] = content
+	context["content"] = template.HTML(content)
 
 	output, err := raw_tmpl(layoutName, context)
 	if err != nil {
@@ -108,6 +122,7 @@ func slashHandler(ctxt *web.Context) {
 	var scope = make(map[string]interface{})
 	scope["code"] = ""
 	scope["snippet"] = "Copie Priv&eacute;e is a new kind of paste website. It will try to auto-detect the language you're pasting."
+	scope["expiries"] = expiries
 	output := tmpl("index", scope)
 	buf.WriteString(output)
 	io.Copy(ctxt, &buf)
