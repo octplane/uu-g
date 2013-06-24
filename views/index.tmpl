@@ -1,4 +1,3 @@
-<script>
 <form class='form-inline' id='gluu_form' method='POST' action='/'>
 	<button class='button btn btn-primary' type='submit' />
 	<i class='icon-file icon-white'>Gluu</i>
@@ -7,10 +6,9 @@
 		<input id='never_expire'> Never</input></label>
 	<select id='expiry_delay' class='span3' name='expiry_delay'>
 		{{range .expiries}}
-			<h1>coucou</h1>{{.Name }}
+      <option {{.Attributes}} >{{.Name }}</option>
 		{{end }}
 	</select>
 
 </form>
 
-</script>

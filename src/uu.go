@@ -28,7 +28,7 @@ func (d debugging) Printf(format string, args ...interface{}) {
 	}
 }
 
-func (d debugging) InDebug() (bool) {
+func (d debugging) InDebug() bool {
 	if d {
 		return true
 	}
