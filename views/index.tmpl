@@ -1,14 +1,13 @@
 <form class='form-inline' id='gluu_form' method='POST' action='/'>
-	<button class='button btn btn-primary' type='submit' />
-	<i class='icon-file icon-white'>Gluu</i>
-
+	<button class='button btn btn-primary' type='submit'>
+		<i class='icon-file icon-white'>Gluu</i>
+	</button>
+	
 	<span>Expiration <label class='checkbox'>
-		<input id='never_expire'> Never</input></label>
+		<input type='checkbox' id='never_expire'> Never</input></label>
 	<select id='expiry_delay' class='span3' name='expiry_delay'>
-		{{range .expiries}}
-      <option {{.Attributes}} >{{.Name }}</option>
-		{{end }}
-	</select>
+		{{range .expiries}}<option{{ if .SelectedAttribute }} selected="{{ .SelectedAttribute }}"{{ end}}>{{.Name }}</option>
+		{{end }}</select>
 
 </form>
 
