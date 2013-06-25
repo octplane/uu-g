@@ -1,51 +1,49 @@
 :javascript
-  var linguist = #{ (scores || []).map {|s| s.first.downcase}.to_json};
-- if code == ""
-  %form.form-inline{ :id => "gluu_form", :method => 'POST', :action => '/'}
-    %button.btn.btn-primary{ :type => 'submit' }
-      %i.icon-file.icon-white
-      Gluu
-    / %button.btn.btn-mini.btn-primary.disabled
-    /   %i.icon-lock.icon-white
-    /   Encrypt
-    %span
-      Expiration
-      %label.checkbox
-        %input#never_expire{:type=>'checkbox',:name => 'never_expire'} Never
-      %select.span3#expiry_delay{:name => 'expiry_delay'}
-        - expiries.each do |ts|
-          %option{ts.html_properties}=ts.name
-    / %label.checkbox
-    /   %input.disabled{:type=>"checkbox"} Browsable
-    .row
-      .span12
-        %textarea{:id => 'clear_code', :style => 'width: 100%', :class => 'input-xlarge', :rows => '10'}= h @code
+  var encrypted = false;
+- if @code == ""
+  %div.container
+    %form.form-inline{ :id => "gluu_form", :method => 'POST', :action => '/'}
+      %input{:id => 'attachments', :type => 'hidden'}
+      %textarea{:id => 'clear_code', :class => 'input-xlarge', :rows => '10'}= h @code
+      %button.btn.btn-primary#gl-but{ :type => 'submit', :disabled => true }
+        Gluu
+      %span
+        Expiration
+        %label.checkbox
+          %input#never_expire{:type=>'checkbox',:name => 'never_expire'} Never
+        %select.span3#expiry_delay{:name => 'expiry_delay'}
+          - expiries.each do |ts|
+            %option{ts.html_properties}=ts.name
+      %span#gl-text I need entropy... shake your mouse !
+    %form.dropzone{ :id => 'uploader', :action => '/file-upload' }
+      %div.fallback
+        %input(name ='file' type ='file' multiple)
 - else
-  .row
-    .span12
-      This paste will
-      - if @never
-        never expire
+  This paste will
+  - if @never
+    never expire
+  - else
+    expire in #{@expire}
+  and is highlighted as 
+  %span.change_to#hljs_lang
+  .f
+    -if @code == nil
+      %button.btn.btn-primary#reveal-but{ :type => "submit", :onclick => 'revealRaw' }
+        Raw
+    %pre
+      - if @code != nil
+        %code#code= h @code
       - else
-        expire on #{@expire}
-      and is highlighted as 
-      %span.change_to#hljs_lang
-  .row
-    .span12
-      %pre
-        - if @code != nil
-          %code#code= h @code
-        - else
-          %code#code
-          %code#encrypted_code= h @encrypted_content
-      %pre{:style => 'display:none;'}
-        %code#spare
-  .row
-    .span12
-      Switch highlight to 
+        %code#code
+        %code#companions
+        %code#encrypted= h @encrypted_content
+        :javascript
+          var encrypted = true;
+    - if @code == nil
+      %code#attachments= h @attachments
+      %textarea#spare
+      :javascript
+        var encrypted = true;
+      %br
+      Switch highlight to
       %div#placeholder (if you don't see anything here, you should enable javascript on your browser :D)
-    .span
-      Switch style to
-      %div#style-placeholder (if you don't see anything here either, your js is definitely not working :-O)
-%hr
-%div= haml :footer

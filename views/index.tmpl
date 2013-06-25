@@ -1,13 +1,55 @@
-<form class='form-inline' id='gluu_form' method='POST' action='/'>
-	<button class='button btn btn-primary' type='submit'>
-		<i class='icon-file icon-white'>Gluu</i>
-	</button>
-	
-	<span>Expiration <label class='checkbox'>
-		<input type='checkbox' id='never_expire'> Never</input></label>
-	<select id='expiry_delay' class='span3' name='expiry_delay'>
-		{{range .expiries}}<option{{ if .SelectedAttribute }} selected="{{ .SelectedAttribute }}"{{ end}}>{{.Name }}</option>
-		{{end }}</select>
+<div class='container'>
+<script type='text/javascript'>var encrypted = false;</script>
+{{ if not .Code }}
+<div class='container'>
+  <form action='/' class='form-inline' id='gluu_form' method='POST'>
+    <input id='attachments' type='hidden' />
+    <textarea class='input-xlarge' id='clear_code' rows='10'></textarea>
+    <button class='btn btn-primary' disabled='disabled' id='gl-but' type='submit'>
+      Gluu
+    </button>
+    <span>
+      Expiration
+      <label class='checkbox'>
+        <input id='never_expire' name='never_expire' type='checkbox'>Never</input>
+      </label>
+      <select class='span3' id='expiry_delay' name='expiry_delay'>
+        <option>5 minutes</option>
+        <option>30 minutes</option>
+        <option>1 hour</option>
+        <option selected='selected'>1 day</option>
+        <option>1 week</option>
+        <option>1 year</option>
+      </select>
+    </span>
+    <span id='gl-text'>I need entropy... shake your mouse !</span>
+  </form>
+  <form action='/file-upload' class='dropzone' id='uploader'>
+    <div class='fallback'>
+      <input multiple='multiple' name='file' type='file' />
+    </div>
+  </form>
+</div>
+{{ else }}
+	<div class='row'>
+		<div class='span12'>
+			This paste will {{if .Never }}never expire{{ else }} expire on {{ .Expire }} {{ end }} and is highlighted as <span id='hljs_lang' class='change_to'></span>
+		</div>
+	</div>
+	<div class='row'>
+		<div class='span12'>
+			<pre>{{ if .Code }}
+				<code id='code'>{{ .Code }}</code>
+				{{ else }}
+				<code id='code'></code>
+				<code id='encrypted_code'>{{ .EncryptedCode }}</code>
+				{{ end }}
+			</pre>
+			<pre style='display:none;'><code id='spare'></code></pre>
+		</div>
+	</div>
 
-</form>
-
+{{ end }}
+</div>
+<hr />
+<div>haml footer</div>
