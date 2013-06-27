@@ -53,6 +53,11 @@ func (t TimeSpan) SelectedAttribute() template.HTML {
 
 }
 
+func Yield(tmpl string) template.HTML {
+	val, _ := raw_tmpl(tmpl, nil)
+	return template.HTML(val)
+}
+
 var expiries = [...]TimeSpan{TimeSpan{"30 min", 1800, true},
 	TimeSpan{"1 day", 86400, false}}
 
@@ -71,10 +76,9 @@ func get_or_load(templateName string) *template.Template {
 		if err != nil {
 			panic(err)
 		}
-		tmpl = template.Must(template.New(templateName).Parse(string(b)))
+		fMap := template.FuncMap{"yield": Yield}
+		tmpl = template.Must(template.New(templateName).Funcs(fMap).Parse(string(b)))
 		debug.Printf("Template %s is ready %x", templateName, tmpl)
-		// fMap := template.FuncMap{"yield": yield_helper}
-		// tmpl.Funcs(fMap)
 		templates[templateName] = tmpl
 	}
 	debug.Printf("Returning: %s -> %x\n", templateName, tmpl)

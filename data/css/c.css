@@ -1,0 +1,65 @@
+body {
+  font-family: monospace;
+  margin-top: 0px; }
+
+.top-container {
+  position: relative;
+  font-size: 0.8em; }
+  .top-container a.brand {
+    color: red; }
+  .top-container ul.nav {
+    display: inline; }
+    .top-container ul.nav li {
+      display: inline; }
+
+.action {
+  position: relative; }
+
+#clear_code {
+  margin: 30px;
+  left: 30px;
+  right: 30px;
+  top: 50px;
+  bottom: 25%;
+  position: absolute; }
+
+.dropzone.dz-clickable {
+  position: absolute;
+  top: 75%;
+  left: 30px;
+  right: 30px;
+  bottom: 10px; }
+
+.attachment {
+  display: block; }
+
+textarea {
+  border: 1px dashed #66cccc;
+  background-color: #fdf6e3; }
+
+.clickable {
+  cursor: pointer;
+  text-decoration: underline; }
+
+#encrypted, #spare, .hidden {
+  display: none; }
+
+#spare {
+  width: 100%;
+  font-family: monospace;
+  border: 1px solid #66cccc;
+  font-size: 12px; }
+
+#attachments, #encrypted {
+  display: none; }
+
+#companions {
+  background-color: white; }
+
+pre code {
+  font-size: 12px;
+  overflow: display;
+  border: 1px solid #66cccc; }
+
+.f {
+  width: 100%; }
