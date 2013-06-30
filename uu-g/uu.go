@@ -129,6 +129,13 @@ func slashHandler(ctxt *web.Context) {
 	io.Copy(ctxt, &buf)
 }
 
+func postHandler(ctxt *web.Context) {
+	println("Post !")
+	for k, v := range ctxt.Params {
+		println(k, v)
+	}
+}
+
 func main() {
 	web.Config.StaticDir = "data"
 
@@ -136,5 +143,6 @@ func main() {
 
 	flag.Parse()
 	web.Get("/", slashHandler)
+	web.Post("/paste", postHandler)
 	web.Run(*hostAndPort)
 }
