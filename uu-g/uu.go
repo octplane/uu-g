@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"flag"
-	"github.com/octplane/web"
+	"github.com/hoisie/web"
 	"html/template"
 	"io"
 	"io/ioutil"
