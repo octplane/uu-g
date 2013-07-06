@@ -3,13 +3,17 @@ package main
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"github.com/hoisie/web"
+	"github.com/octplane/mnemo"
 	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const debug debugging = true // or flip to false
@@ -129,8 +133,23 @@ func slashHandler(ctxt *web.Context) {
 	io.Copy(ctxt, &buf)
 }
 
+func savePost(id int, params map[string]string) {
+	fname := mnemo.FromInteger(id) + ".uu"
+	file, err := os.OpenFile(fname, FileMode.O_EXCL|FileMode.O_CREATE,
+		os.ModeExclusive)
+	if err != nil {
+		panic(err)
+	}
+	file.Close()
+}
+
 func postHandler(ctxt *web.Context) {
-	println("Post !")
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	id := r.Int() & 0xFFFFFFFF
+
+	savePost(id, ctxt.Params)
+
+	fmt.Printf("Post %s !\n", mnemo.FromInteger(id))
 	for k, v := range ctxt.Params {
 		println(k, v)
 	}
