@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/hoisie/web"
@@ -135,11 +136,26 @@ func slashHandler(ctxt *web.Context) {
 
 func savePost(id int, params map[string]string) {
 	fname := mnemo.FromInteger(id) + ".uu"
-	file, err := os.OpenFile(fname, FileMode.O_EXCL|FileMode.O_CREATE,
-		os.ModeExclusive)
+	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		panic(err)
 	}
+	var count int
+	var data []byte
+
+	data, err = json.Marshal(params)
+	if err != nil {
+		panic(err)
+	}
+
+	count, err = file.Write(data)
+	if err != nil {
+		panic(err)
+	}
+	if count != len(data) {
+		panic(fmt.Sprintf("Wrote only %d/%d in %s", count, len(data), fname))
+	}
+
 	file.Close()
 }
 
