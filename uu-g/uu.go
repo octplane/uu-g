@@ -134,8 +134,9 @@ func slashHandler(ctxt *web.Context) {
 	io.Copy(ctxt, &buf)
 }
 
-func savePost(id int, params map[string]string) {
-	fname := mnemo.FromInteger(id) + ".uu"
+func savePost(id int, params map[string]string) string {
+	basename := mnemo.FromInteger(id)
+	fname := basename + ".uu"
 	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		panic(err)
@@ -157,18 +158,33 @@ func savePost(id int, params map[string]string) {
 	}
 
 	file.Close()
+	return basename
+}
+
+func loadPost(basename string) (map[string]string, error) {
+	fname := basename + ".uu"
+	content, err := ioutil.ReadFile(basename)
+	if err != nil {
+		return nil, err
+	}
+	var data map[string]string
+	data = json.Unmarshal(content, data)
+	return data
+
 }
 
 func postHandler(ctxt *web.Context) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	id := r.Int() & 0xFFFFFFFF
 
-	savePost(id, ctxt.Params)
+	fname := savePost(id, ctxt.Params)
 
-	fmt.Printf("Post %s !\n", mnemo.FromInteger(id))
-	for k, v := range ctxt.Params {
-		println(k, v)
-	}
+	ctxt.WriteString(fmt.Sprintf("/v/%s", fname))
+}
+
+func viewHandler(ctx *web.Context, basename string) {
+	data, err := loadPost(basename)
+	ctx.Write(data)
 }
 
 func main() {
@@ -179,5 +195,6 @@ func main() {
 	flag.Parse()
 	web.Get("/", slashHandler)
 	web.Post("/paste", postHandler)
+	web.Get("/v/(.*)", viewHandler)
 	web.Run(*hostAndPort)
 }
