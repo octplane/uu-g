@@ -134,9 +134,13 @@ func slashHandler(ctxt *web.Context) {
 	io.Copy(ctxt, &buf)
 }
 
+func makePasteFilename(basename string) string {
+	return "pastes/" + basename + ".uu"
+}
+
 func savePost(id int, params map[string]string) string {
 	basename := mnemo.FromInteger(id)
-	fname := basename + ".uu"
+	fname := makePasteFilename(basename)
 	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		panic(err)
@@ -162,14 +166,17 @@ func savePost(id int, params map[string]string) string {
 }
 
 func loadPost(basename string) (map[string]string, error) {
-	fname := basename + ".uu"
-	content, err := ioutil.ReadFile(basename)
+	fname := makePasteFilename(basename)
+	content, err := ioutil.ReadFile(fname)
 	if err != nil {
 		return nil, err
 	}
 	var data map[string]string
-	data = json.Unmarshal(content, data)
-	return data
+	err = json.Unmarshal(content, &data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 
 }
 
@@ -184,7 +191,10 @@ func postHandler(ctxt *web.Context) {
 
 func viewHandler(ctx *web.Context, basename string) {
 	data, err := loadPost(basename)
-	ctx.Write(data)
+	if err != nil {
+		panic(err)
+	}
+	ctx.Write([]byte(fmt.Sprintf("%v", data)))
 }
 
 func main() {
