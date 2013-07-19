@@ -1,6 +1,6 @@
 <div class='container'>
+{{ if not .encrypted_content }}
 <script type='text/javascript'>var encrypted = false;</script>
-{{ if not .Code }}
 <div class='container'>
   <form action='/' class='form-inline' id='gluu_form' method='POST'>
     <input id='attachments' type='hidden' />
@@ -31,19 +31,17 @@
   </form>
 </div>
 {{ else }}
+<script type="text/javascript">var encrypted = true;</script>
 	<div class='row'>
 		<div class='span12'>
-			This paste will {{if .Never }}never expire{{ else }} expire on {{ .Expire }} {{ end }} and is highlighted as <span id='hljs_lang' class='change_to'></span>
+			This paste will {{if .never }}never expire{{ else }} expire {{ .expire }} {{ end }} and is highlighted as <span id='hljs_lang' class='change_to'></span>
 		</div>
 	</div>
 	<div class='row'>
 		<div class='span12'>
-			<pre>{{ if .Code }}
-				<code id='code'>{{ .Code }}</code>
-				{{ else }}
+			<pre>
 				<code id='code'></code>
-				<code id='encrypted_code'>{{ .EncryptedCode }}</code>
-				{{ end }}
+				<code id='encrypted'>{{ .encrypted_content }}</code>
 			</pre>
 			<pre style='display:none;'><code id='spare'></code></pre>
 		</div>

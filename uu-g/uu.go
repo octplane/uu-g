@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -122,16 +123,32 @@ func tmpl(templateName string, context map[string]interface{}) string {
 	return tmpl_with_layout(defaultLayoutName, templateName, context)
 }
 
-func slashHandler(ctxt *web.Context) {
-	// Main Router
-	var buf bytes.Buffer
-	var scope = make(map[string]interface{})
-	scope["code"] = ""
-	scope["snippet"] = "Copie Priv&eacute;e is a new kind of paste website. It will try to auto-detect the language you're pasting."
-	scope["expiries"] = expiries
-	output := tmpl("index", scope)
-	buf.WriteString(output)
-	io.Copy(ctxt, &buf)
+func makeExpiryFromPost(expiry_key string, never bool) string {
+
+	if never {
+		return "-1"
+	}
+	for _, exp := range expiries {
+		if expiry_key == exp.Name {
+			return strconv.FormatInt(time.Now().Add(time.Duration(exp.duration)*time.Second).Unix(), 10)
+		}
+	}
+	panic(fmt.Sprintf("Unknown duration \"%s\"", expiry_key))
+}
+
+func expiryStringFromTime(when int64) string {
+	if when == -1 {
+		return "never"
+	}
+	expire := time.Unix(when, 0)
+	rest := int64(expire.Sub(time.Now()) / time.Second)
+	if rest > 86400*2 {
+		return fmt.Sprintf("in %d days", rest/86400)
+	}
+	if rest > 3600*2 {
+		return fmt.Sprintf("in %d hours", rest/3600)
+	}
+	return fmt.Sprintf("in %d minutes", rest/60)
 }
 
 func makePasteFilename(basename string) string {
@@ -148,7 +165,13 @@ func savePost(id int, params map[string]string) string {
 	var count int
 	var data []byte
 
-	data, err = json.Marshal(params)
+	var paste = make(map[string]interface{})
+
+	paste["content"] = params["content"]
+	paste["attachments"] = params["attachements"]
+	paste["expire"] = makeExpiryFromPost(params["expiry_delay"], params["never_expire"] == "true")
+
+	data, err = json.Marshal(paste)
 	if err != nil {
 		panic(err)
 	}
@@ -180,6 +203,19 @@ func loadPost(basename string) (map[string]string, error) {
 
 }
 
+func slashHandler(ctxt *web.Context) {
+	// Main Router
+	var buf bytes.Buffer
+	var scope = make(map[string]interface{})
+	scope["code"] = ""
+	scope["snippet"] = "Copie Priv&eacute;e is a new kind of paste website. It will try to auto-detect the language you're pasting."
+	scope["expiries"] = expiries
+
+	output := tmpl("index", scope)
+	buf.WriteString(output)
+	io.Copy(ctxt, &buf)
+}
+
 func postHandler(ctxt *web.Context) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	id := r.Int() & 0xFFFFFFFF
@@ -194,7 +230,21 @@ func viewHandler(ctx *web.Context, basename string) {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Write([]byte(fmt.Sprintf("%v", data)))
+	// Main Router
+	var buf bytes.Buffer
+	var scope = make(map[string]interface{})
+	scope["encrypted_content"] = template.HTML(data["content"])
+	scope["attachments"] = template.HTML(data["attachments"])
+	expire, _ := strconv.ParseInt(data["expire"], 10, 64)
+	scope["never"] = false
+	if expire == -1 {
+		scope["never"] = true
+	}
+	scope["expire"] = expiryStringFromTime(expire)
+
+	output := tmpl("index", scope)
+	buf.WriteString(output)
+	io.Copy(ctx, &buf)
 }
 
 func main() {
