@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/hoisie/web"
-	"github.com/octplane/mnemo"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -18,7 +17,17 @@ import (
 	"time"
 )
 
-const debug debugging = true // or flip to false
+var globals = struct {
+	pasteResolver *PasteResolver
+	attnResolver  *AttnResolver
+}{}
+
+func init() {
+	globals.pasteResolver = &PasteResolver{}
+	globals.attnResolver = &AttnResolver{}
+}
+
+const debug debugging = false // or flip to false
 
 type debugging bool
 
@@ -151,13 +160,8 @@ func expiryStringFromTime(when int64) string {
 	return fmt.Sprintf("in %d minutes", rest/60)
 }
 
-func makePasteFilename(basename string) string {
-	return "pastes/" + basename + ".uu"
-}
-
 func savePost(id int, params map[string]string) string {
-	basename := mnemo.FromInteger(id)
-	fname := makePasteFilename(basename)
+	fname, mnem := getNextIdentifier(globals.pasteResolver)
 	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		panic(err)
@@ -185,11 +189,11 @@ func savePost(id int, params map[string]string) string {
 	}
 
 	file.Close()
-	return basename
+	return mnem
 }
 
 func loadPost(basename string) (map[string]string, error) {
-	fname := makePasteFilename(basename)
+	fname := globals.pasteResolver.GetFilename(basename)
 	content, err := ioutil.ReadFile(fname)
 	if err != nil {
 		return nil, err
@@ -225,6 +229,11 @@ func postHandler(ctxt *web.Context) {
 	ctxt.WriteString(fmt.Sprintf("/v/%s", fname))
 }
 
+func fileHandler(ctxt *web.Context) {
+	file, header, _ := ctxt.Request.FormFile("file")
+	fmt.Printf("%v %v", file, header)
+}
+
 func viewHandler(ctx *web.Context, basename string) {
 	data, err := loadPost(basename)
 	if err != nil {
@@ -255,6 +264,7 @@ func main() {
 	flag.Parse()
 	web.Get("/", slashHandler)
 	web.Post("/paste", postHandler)
+	web.Post("/file-upload", fileHandler)
 	web.Get("/v/(.*)", viewHandler)
 	web.Run(*hostAndPort)
 }
