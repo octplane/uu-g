@@ -13,6 +13,7 @@ import (
 	"mime/multipart"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var globals = struct {
@@ -25,7 +26,7 @@ func init() {
 	globals.attnResolver = &AttachmentResolver{}
 }
 
-const debug debugging = false // or flip to false
+const debug debugging = true // or flip to false
 
 type debugging bool
 
@@ -46,6 +47,15 @@ func (d debugging) InDebug() bool {
 		return true
 	}
 	return false
+}
+
+func fileExists(dir string) bool {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return false
+	}
+
+	return !info.IsDir()
 }
 
 func savePost(params map[string]string) string {
@@ -141,9 +151,26 @@ func postHandler(ctxt *web.Context) {
 }
 
 func fileHandler(ctxt *web.Context) {
-	file, _, _ := ctxt.Request.FormFile("file")
-	attachment_mnem := saveAttachment(file)
+	file, info, _ := ctxt.Request.FormFile("file")
+
+	var ext string
+	if strings.LastIndex(info.Filename, ".") == -1 {
+		ext = ".data"
+	} else {
+		ext = info.Filename[strings.LastIndex(info.Filename, "."):]
+	}
+	attachment_mnem := saveAttachment(file) + ext
 	ctxt.WriteString(fmt.Sprintf("%s", attachment_mnem))
+}
+
+func attachmentHandler(ctx *web.Context) {
+	path := ctx.Request.URL.Path
+	mnem := path[3 : len(path)-5]
+	staticFile := globals.attnResolver.GetFilename(mnem)
+	if fileExists(staticFile) {
+		http.ServeFile(w, req, staticFile)
+		return true
+	}
 }
 
 func viewHandler(ctx *web.Context, basename string) {
@@ -178,5 +205,6 @@ func main() {
 	web.Post("/paste", postHandler)
 	web.Post("/file-upload", fileHandler)
 	web.Get("/p/(.*)", viewHandler)
+	web.Get("/a/(.*)", attachmentHandler)
 	web.Run(*hostAndPort)
 }
