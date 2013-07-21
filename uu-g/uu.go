@@ -10,20 +10,19 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"math/rand"
+	"mime/multipart"
 	"os"
 	"strconv"
-	"time"
 )
 
 var globals = struct {
 	pasteResolver *PasteResolver
-	attnResolver  *AttnResolver
+	attnResolver  *AttachmentResolver
 }{}
 
 func init() {
 	globals.pasteResolver = &PasteResolver{}
-	globals.attnResolver = &AttnResolver{}
+	globals.attnResolver = &AttachmentResolver{}
 }
 
 const debug debugging = false // or flip to false
@@ -49,19 +48,21 @@ func (d debugging) InDebug() bool {
 	return false
 }
 
-func savePost(id int, params map[string]string) string {
+func savePost(params map[string]string) string {
 	fname, mnem := getNextIdentifier(globals.pasteResolver)
 	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		panic(err)
 	}
+	defer file.Close()
+
 	var count int
 	var data []byte
 
 	var paste = make(map[string]interface{})
 
 	paste["content"] = params["content"]
-	paste["attachments"] = params["attachements"]
+	paste["attachments"] = params["attachments"]
 	paste["expire"] = makeExpiryFromPost(params["expiry_delay"], params["never_expire"] == "true")
 
 	data, err = json.Marshal(paste)
@@ -77,7 +78,31 @@ func savePost(id int, params map[string]string) string {
 		panic(fmt.Sprintf("Wrote only %d/%d in %s", count, len(data), fname))
 	}
 
-	file.Close()
+	return mnem
+}
+
+func saveAttachment(attn multipart.File) string {
+
+	content, err := ioutil.ReadAll(attn)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fname, mnem := getNextIdentifier(globals.attnResolver)
+	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	var count int
+	count, err = file.Write(content)
+	if err != nil {
+		panic(err)
+	}
+	if count != len(content) {
+		panic(fmt.Sprintf("Wrote only %d/%d in %s", count, len(content), fname))
+	}
 	return mnem
 }
 
@@ -110,17 +135,15 @@ func slashHandler(ctxt *web.Context) {
 }
 
 func postHandler(ctxt *web.Context) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	id := r.Int() & 0xFFFFFFFF
 
-	fname := savePost(id, ctxt.Params)
-
-	ctxt.WriteString(fmt.Sprintf("/v/%s", fname))
+	fname := savePost(ctxt.Params)
+	ctxt.WriteString(fmt.Sprintf("/p/%s", fname))
 }
 
 func fileHandler(ctxt *web.Context) {
-	file, header, _ := ctxt.Request.FormFile("file")
-	fmt.Printf("%v %v", file, header)
+	file, _, _ := ctxt.Request.FormFile("file")
+	attachment_mnem := saveAttachment(file)
+	ctxt.WriteString(fmt.Sprintf("%s", attachment_mnem))
 }
 
 func viewHandler(ctx *web.Context, basename string) {
@@ -154,6 +177,6 @@ func main() {
 	web.Get("/", slashHandler)
 	web.Post("/paste", postHandler)
 	web.Post("/file-upload", fileHandler)
-	web.Get("/v/(.*)", viewHandler)
+	web.Get("/p/(.*)", viewHandler)
 	web.Run(*hostAndPort)
 }

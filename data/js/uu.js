@@ -1,6 +1,7 @@
 var hljs_languages;
 
 var cur_lang;
+var password;
 
 function updateHash()
 {
@@ -65,15 +66,7 @@ function wakeUp() {
         displayError();
       }
     } 
-    try {
-      var ct = sjcl.decrypt(password, atts);
-      setAttachmentsTo(ct);
-    } catch(e) {
-      if(e instanceof sjcl.exception.corrupt) {
-        displayError();
-      }
-    } 
-
+    setAttachmentsTo(atts);
   }else {
     displayError();
   }
@@ -87,6 +80,8 @@ function wakeUp() {
 function RNGisReady() {
   $('#gl-but').removeAttr("disabled");
   $('#gl-text').text("");
+  password = generatePassword(16);
+
 }
 
 if(encrypted) {
@@ -135,12 +130,10 @@ $(document).ready(function() {
       alert("RNG not ready, move you mouse a bit and try again.");
       return false;
     }
-    var password = generatePassword(16);
 
     var encrypted = sjcl.encrypt(password, data);
-    var attachments = sjcl.encrypt(password, $("#attachments").text());
 
-    var sent_data = { content: encrypted, attachments: attachments };
+    var sent_data = { content: encrypted, attachments: $("#attachments").text() };
 
     var expiry;
     if($('#never_expire').is(':checked')) {
@@ -168,7 +161,7 @@ $(document).ready(function() {
     hljs.highlightBlock(elt);
 
   }
-  
+
   if(parms['lang']) {
     changeTo(parms['lang']);
   }
@@ -223,7 +216,6 @@ function setAttachmentsTo(content) {
     var currentA = attn[i];
     if(/Attachment:/.test(currentA))
     {
-      
       if(/(.jpeg$|.jpg$|.png|.gif)$/.test(currentA)) {
         $('#companions').append($('<img />', { 'src': currentA.substr(11), 'class' : 'attachment' }));
       } else {

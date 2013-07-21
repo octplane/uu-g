@@ -17,9 +17,9 @@ func (pr PasteResolver) GetFilename(identifier string) string {
 	return "pastes/" + identifier + ".uu"
 }
 
-type AttnResolver struct{}
+type AttachmentResolver struct{}
 
-func (at *AttnResolver) GetFilename(identifier string) string {
+func (at *AttachmentResolver) GetFilename(identifier string) string {
 	return "attn/" + identifier + ".data"
 }
 
@@ -27,7 +27,7 @@ func getNextIdentifier(resolver FsResolver) (fname string, mnem string) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	id := r.Int()
 	for {
-		basename := mnemo.FromInteger(id & 0xFFFF)
+		basename := mnemo.FromInteger(id & 0xFFFFFF)
 		inc := 1
 		_, err := os.Stat(resolver.GetFilename(basename))
 		if err != nil && os.IsNotExist(err) {

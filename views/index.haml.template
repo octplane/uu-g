@@ -32,10 +32,10 @@
   .row
     .span12
       %pre
-{{ if .code }}          
+{{ if .code }}
         %code#code
         %code#encrypted_code= h @encrypted_content
-{{ else }}          
+{{ else }}
         %code#code= h @code
 {{ end }}
       %pre{:style => 'display:none;'}
