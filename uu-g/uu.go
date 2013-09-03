@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -168,9 +169,10 @@ func attachmentHandler(ctx *web.Context) {
 	mnem := path[3 : len(path)-5]
 	staticFile := globals.attnResolver.GetFilename(mnem)
 	if fileExists(staticFile) {
-		http.ServeFile(w, req, staticFile)
-		return true
+		http.ServeFile(ctx, ctx.Request, staticFile)
+		return
 	}
+	ctx.NotFound(fmt.Sprintf("%s was not found.", path))
 }
 
 func viewHandler(ctx *web.Context, basename string) {
