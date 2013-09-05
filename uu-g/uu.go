@@ -13,6 +13,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -164,15 +165,14 @@ func fileHandler(ctxt *web.Context) {
 	ctxt.WriteString(fmt.Sprintf("%s", attachment_mnem))
 }
 
-func attachmentHandler(ctx *web.Context) {
-	path := ctx.Request.URL.Path
-	mnem := path[3 : len(path)-5]
-	staticFile := globals.attnResolver.GetFilename(mnem)
+func attachmentHandler(ctx *web.Context, attachmentName string) {
+	var baseName = attachmentName[0 : len(attachmentName)-len(path.Ext(attachmentName))]
+	staticFile := globals.attnResolver.GetFilename(baseName)
 	if fileExists(staticFile) {
 		http.ServeFile(ctx, ctx.Request, staticFile)
 		return
 	}
-	ctx.NotFound(fmt.Sprintf("%s was not found.", path))
+	ctx.NotFound(fmt.Sprintf("%s was not found.", baseName))
 }
 
 func viewHandler(ctx *web.Context, basename string) {
