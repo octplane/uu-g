@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -169,6 +170,24 @@ func attachmentHandler(ctx *web.Context, attachmentName string) {
 	var baseName = attachmentName[0 : len(attachmentName)-len(path.Ext(attachmentName))]
 	staticFile := globals.attnResolver.GetFilename(baseName)
 	if fileExists(staticFile) {
+		// Cargo culted from http.ServeContent
+		sdir, file := filepath.Split(staticFile)
+		dir := http.Dir(sdir)
+		f, err := dir.Open(file)
+		if err != nil {
+			return
+		}
+		var buf [1024]byte
+		n, _ := io.ReadFull(f, buf[:])
+		b := buf[:n]
+		ctype := http.DetectContentType(b)
+		_, err = f.Seek(0, os.SEEK_SET) // rewind to output whole file
+		if err != nil {
+			http.Error(ctx, "seeker can't seek", http.StatusInternalServerError)
+			return
+		}
+		ctx.Header().Set("Content-Type", ctype)
+
 		http.ServeFile(ctx, ctx.Request, staticFile)
 		return
 	}
