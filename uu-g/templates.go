@@ -44,7 +44,6 @@ func get_or_load(templateName string) *template.Template {
 func raw_tmpl(templateName string, context map[string]interface{}) (string, error) {
 	tmpl := get_or_load(templateName)
 	var templated bytes.Buffer
-	debug.Printf("Applying template %X to context %v\n", tmpl, context)
 	err := tmpl.Execute(&templated, context)
 	if err != nil {
 		return "", err
