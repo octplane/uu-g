@@ -91,7 +91,6 @@ if(encrypted) {
 
 $(document).ready(function() {
   sjcl.random.startCollectors();
-  
   if(sjcl.random.isReady()) {
     RNGisReady();
   } else {
@@ -135,7 +134,6 @@ $(document).ready(function() {
 
     var sent_data = { content: encrypted, attachments: $("#attachments").text() };
 
-    var expiry;
     if($('#never_expire').is(':checked')) {
       sent_data['never_expire'] = true;
     } else {
@@ -173,6 +171,16 @@ $(document).ready(function() {
     var attachment_name = "Attachment:/a/"+text+"\n";
     $("#attachments").append(attachment_name);
     return file.previewElement.classList.add("dz-success");
+  },
+  init: function() {
+    this.on("sending", function(file, xhr, formdata) {
+      var expiry;
+      if($('#never_expire').is(':checked')) {
+        formdata.append('never_expire',true);
+      } else {
+        formdata.append('expiry_delay',$('#expiry_delay').val());
+      }
+    });
   }
 };
 

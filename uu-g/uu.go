@@ -94,7 +94,7 @@ func savePost(params map[string]string) string {
 	return mnem
 }
 
-func saveAttachment(attn multipart.File) string {
+func saveAttachment(attn multipart.File, prefix string) string {
 
 	content, err := ioutil.ReadAll(attn)
 
@@ -102,7 +102,7 @@ func saveAttachment(attn multipart.File) string {
 		panic(err)
 	}
 
-	fname, mnem := getNextIdentifier(globals.attnResolver)
+	fname, mnem := getNextIdentifierWithPrefix(globals.attnResolver, prefix)
 	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		panic(err)
@@ -155,14 +155,17 @@ func postHandler(ctxt *web.Context) {
 
 func fileHandler(ctxt *web.Context) {
 	file, info, _ := ctxt.Request.FormFile("file")
+	debug.Printf("%s\n", ctxt.Request.FormValue("expiry_delay"))
+	debug.Printf("%s\n", ctxt.Request.FormValue("never_expire"))
 
+	expire := makeExpiryFromPost(ctxt.Request.FormValue("expiry_delay"), ctxt.Request.FormValue("never_expire") == "true")
 	var ext string
 	if strings.LastIndex(info.Filename, ".") == -1 {
 		ext = ".data"
 	} else {
 		ext = info.Filename[strings.LastIndex(info.Filename, "."):]
 	}
-	attachment_mnem := saveAttachment(file) + ext
+	attachment_mnem := saveAttachment(file, expire) + ext
 	ctxt.WriteString(fmt.Sprintf("%s", attachment_mnem))
 }
 
