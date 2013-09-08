@@ -20,13 +20,16 @@ import (
 )
 
 var globals = struct {
-	pasteResolver *PasteResolver
-	attnResolver  *AttachmentResolver
+	pasteResolver *FsResolver
+	attnResolver  *FsResolver
 }{}
 
 func init() {
-	globals.pasteResolver = &PasteResolver{}
-	globals.attnResolver = &AttachmentResolver{}
+	globals.pasteResolver = &FsResolver{"pastes/", ".uu"}
+	globals.attnResolver = &FsResolver{"attn/", ".data"}
+
+	globals.pasteResolver.Cleanup()
+	globals.attnResolver.Cleanup()
 }
 
 const debug debugging = true // or flip to false
@@ -62,7 +65,7 @@ func fileExists(dir string) bool {
 }
 
 func savePost(params map[string]string) string {
-	fname, mnem := getNextIdentifier(globals.pasteResolver)
+	fname, mnem := globals.pasteResolver.GetNextIdentifier()
 	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		panic(err)
@@ -102,7 +105,7 @@ func saveAttachment(attn multipart.File, prefix string) string {
 		panic(err)
 	}
 
-	fname, mnem := getNextIdentifierWithPrefix(globals.attnResolver, prefix)
+	fname, mnem := globals.attnResolver.GetNextIdentifierWithPrefix(prefix)
 	file, err := os.OpenFile(fname, os.O_EXCL|os.O_WRONLY|os.O_CREATE, 0660)
 	if err != nil {
 		panic(err)
