@@ -2,10 +2,18 @@
 
 UU is a private paste website, written in Go
 
+- Encrypt paste on the client
+- Support Drag and Drop of images
+- Key is not known from the server
+- Auto-hilight text
+- small footprint
+- no database
+- Runs on Go 1.1
+
 
 # Compilation
 
-- Install Go
+- Install Go, hg, and git
 - Set GOPATH to somewhere where you can write
 - Checkout the git repository
 - Get the dependencies
