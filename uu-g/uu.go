@@ -20,13 +20,13 @@ import (
 )
 
 var globals = struct {
-	pasteResolver *FsResolver
-	attnResolver  *FsResolver
+	pasteResolver *PasteResolver
+	attnResolver  *AttachmentResolver
 }{}
 
 func init() {
-	globals.pasteResolver = &FsResolver{"pastes/", ".uu"}
-	globals.attnResolver = &FsResolver{"attn/", ".data"}
+	globals.pasteResolver = &PasteResolver{FsResolver{"pastes/", ".uu", &PasteChecker{}}}
+	globals.attnResolver = &AttachmentResolver{FsResolver{"attn/", ".data", &AttachmentChecker{}}}
 
 	globals.pasteResolver.Cleanup()
 	globals.attnResolver.Cleanup()
@@ -122,21 +122,6 @@ func saveAttachment(attn multipart.File, prefix string) string {
 	return mnem
 }
 
-func loadPost(basename string) (map[string]string, error) {
-	fname := globals.pasteResolver.GetFilename(basename)
-	content, err := ioutil.ReadFile(fname)
-	if err != nil {
-		return nil, err
-	}
-	var data map[string]string
-	err = json.Unmarshal(content, &data)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-
-}
-
 func slashHandler(ctxt *web.Context) {
 	// Main Router
 	var buf bytes.Buffer
@@ -201,7 +186,7 @@ func attachmentHandler(ctx *web.Context, attachmentName string) {
 }
 
 func viewHandler(ctx *web.Context, basename string) {
-	data, err := loadPost(basename)
+	data, err := globals.pasteResolver.LoadItem(basename)
 	if err != nil {
 		panic(err)
 	}

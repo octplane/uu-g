@@ -2,30 +2,87 @@ package main
 
 import (
 	"container/list"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/octplane/mnemo"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
 
+type Resolver interface {
+	Cleanup()
+	GetNextIdentifier() (fname string, mnem string)
+	GetNextIdentifierWithPrefix(prefix string) (fname string, mnem string)
+	GetFilename(identifier string) string
+	LoadItem(identifier string) (map[string]string, error)
+}
+
+type ExpireChecker interface {
+	HasExpired(identifier string, res Resolver) bool
+	LoadItem(identifier string, res Resolver) (map[string]string, error)
+}
+
 type FsResolver struct {
 	baseFolder    string
 	baseExtension string
+	expireChecker ExpireChecker
 }
 
-type PasteResolver struct{}
-
-func (pr PasteResolver) GetFilename(identifier string) string {
-	return "pastes/" + identifier + ".uu"
+type PasteResolver struct {
+	FsResolver
 }
 
-type AttachmentResolver struct{}
+type AttachmentResolver struct {
+	FsResolver
+}
 
-func (at *AttachmentResolver) GetFilename(identifier string) string {
-	return "attn/" + identifier + ".data"
+type PasteChecker struct{}
+
+type AttachmentChecker struct{}
+
+func (at *AttachmentChecker) HasExpired(filename string, res Resolver) bool {
+	return false
+}
+
+func (pc *AttachmentChecker) LoadItem(identifier string, res Resolver) (map[string]string, error) {
+	return nil, errors.New("Not implemented")
+}
+
+func (pc *PasteChecker) HasExpired(identifier string, res Resolver) bool {
+	content, err := pc.LoadItem(identifier, res)
+	if err != nil {
+		panic(err)
+	}
+	expire, _ := strconv.ParseInt(content["expire"], 10, 64)
+	if time.Unix(expire, 0).Before(time.Now()) {
+		return true
+	}
+	return false
+}
+
+func (res *FsResolver) LoadItem(identifier string) (map[string]string, error) {
+	return res.expireChecker.LoadItem(identifier, res)
+}
+
+func (pc *PasteChecker) LoadItem(identifier string, res Resolver) (map[string]string, error) {
+	fname := res.GetFilename(identifier)
+	content, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return nil, err
+	}
+	var data map[string]string
+	err = json.Unmarshal(content, &data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (at *FsResolver) GetNextIdentifier() (fname string, mnem string) {
@@ -36,7 +93,10 @@ func (at *FsResolver) GetNextIdentifierWithPrefix(prefix string) (fname string, 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	id := r.Int()
 	for {
-		basename := mnemo.FromInteger(id&0xFFFFFF) + "-" + prefix
+		basename := mnemo.FromInteger(id & 0xFFFFFF)
+		if prefix != "" {
+			basename += "-" + prefix
+		}
 		inc := 1
 		_, err := os.Stat(at.GetFilename(basename))
 		if err != nil && os.IsNotExist(err) {
@@ -58,6 +118,11 @@ func (at *FsResolver) Cleanup() {
 	ds.Scan()
 	for e := ds.Items.Front(); e != nil; e = e.Next() {
 		fmt.Printf("- %s\n", e.Value)
+		identifier, _ := e.Value.(string)
+		if at.expireChecker.HasExpired(identifier, at) {
+			fmt.Printf("%s has expired", identifier)
+			// delete item
+		}
 	}
 }
 
@@ -66,11 +131,11 @@ type DataScanner struct {
 	Items *list.List
 }
 
-func (d DataScanner) visit(path string, info os.FileInfo, err error) error {
-	baseName := strings.TrimPrefix(path, d.root)
+func (d DataScanner) visit(pth string, info os.FileInfo, err error) error {
+	baseName := strings.TrimPrefix(pth, d.root)
 	// Keep only first level directories
 	if info.Mode().IsRegular() && len(baseName) > 0 {
-		d.Items.PushBack(baseName)
+		d.Items.PushBack(baseName[0 : len(baseName)-len(path.Ext(baseName))])
 	}
 	return nil
 }
