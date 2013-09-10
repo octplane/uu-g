@@ -17,8 +17,8 @@
         <option>5 minutes</option>
         <option>30 minutes</option>
         <option>1 hour</option>
-        <option selected='selected'>1 day</option>
-        <option>1 week</option>
+        <option>1 day</option>
+        <option selected='selected'>1 week</option>
         <option>1 year</option>
       </select>
     </span>
@@ -39,13 +39,17 @@
 	</div>
 	<div class='row'>
 		<div class='span12'>
+      <button class="btn btn-primary" id="reveal-but" type="submit">Raw</button>
 			<pre>
 				<code id='code'></code>
 				<code id='encrypted'>{{ .encrypted_content }}</code>
 			</pre>
+      Switch highlight to
+      <div id="placeholder">(if you don't see anything here, you should enable javascript on your browser :D)</div>
+
       <div id="attachments">{{ .attachments }}</div>
       <div id="companions"></div>
-			<pre style='display:none;'><code id='spare'></code></pre>
+			<textarea id='spare'></textarea>
 		</div>
 	</div>
 

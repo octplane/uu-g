@@ -26,17 +26,14 @@ func get_or_load(templateName string) *template.Template {
 			panic(err)
 		}
 		sourcePath := filepath.Join(cwd, "./views/"+templateName+".tmpl")
-		debug.Printf("Reading %s from disk", sourcePath)
 		b, err = ioutil.ReadFile(sourcePath)
 		if err != nil {
 			panic(err)
 		}
 		fMap := template.FuncMap{"yield": Yield}
 		tmpl = template.Must(template.New(templateName).Funcs(fMap).Parse(string(b)))
-		debug.Printf("Template %s is ready %x", templateName, tmpl)
 		templates[templateName] = tmpl
 	}
-	debug.Printf("Returning: %s -> %x\n", templateName, tmpl)
 
 	return tmpl
 }

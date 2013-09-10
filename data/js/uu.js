@@ -48,6 +48,7 @@ function displayError() {
 }
 
 var parms = parseHash(window.location.hash.substr(1));
+debugger;
 var password;
 
 function wakeUp() {
@@ -60,7 +61,6 @@ function wakeUp() {
     try {
       var ct = sjcl.decrypt(password, data);
       setPasteto(ct);
-      $('#spare').text(ct);
     } catch(e) {
       if(e instanceof sjcl.exception.corrupt) {
         displayError();
@@ -80,7 +80,8 @@ function wakeUp() {
 function RNGisReady() {
   $('#gl-but').removeAttr("disabled");
   $('#gl-text').text("");
-  password = generatePassword(16);
+  if(!password)
+    password = generatePassword(16);
 
 }
 
@@ -216,6 +217,8 @@ function setPasteto(content, lang) {
     cur_lang = detected;
     $('#hljs_lang').text(detected);
   }
+  $('#spare').text(content);
+
 }
 
 function setAttachmentsTo(content) {
