@@ -22,8 +22,12 @@ func (t TimeSpan) SelectedAttribute() template.HTML {
 
 }
 
-var expiries = [...]TimeSpan{TimeSpan{"30 min", 1800, true},
-	TimeSpan{"1 day", 86400, false}}
+var expiries = [...]TimeSpan{
+	TimeSpan{"30 min", 1800, false},
+	TimeSpan{"1 day", 86400, false},
+	TimeSpan{"1 hour", 3600, false},
+	TimeSpan{"1 week", 86400 *7, true},
+	TimeSpan{"1 year", 86400 * 365, false}}
 
 func makeExpiryFromPost(expiry_key string, never bool) string {
 
