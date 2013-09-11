@@ -48,7 +48,6 @@ function displayError() {
 }
 
 var parms = parseHash(window.location.hash.substr(1));
-debugger;
 var password;
 
 function wakeUp() {

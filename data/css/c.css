@@ -1,49 +1,133 @@
 body {
-  font-family: monospace;
-  margin-top: 0px; }
+  font-family: Helvetica;
+  margin: 0px; }
 
-
+/* http://colorschemedesigner.com/#3f31Tw0w0w0w0 */
 select, button {
 background-color: white;
 border: 1px solid gray;
-font-family: monospace;
+font-family: Helvetica;
 font-size: 1em;
+  border-radius: 3px;
+  padding-left: 4px;
+  padding-right: 4px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  color: white;
+  background-color: #f80012;
+
 }
 
-.dz-default {
-	text-align:center;
-	font-size: 4em;
+.expi {
+  margin-left: 10px;
+  background-color: #FC717B;
+  padding: 4px;
+  color: white;
 }
-
 
 
 .top-container {
   position: relative;
 }
-  .top-container a.brand {
-    color: red; }
-  .top-container ul.nav {
-    display: inline; }
-    .top-container ul.nav li {
-      display: inline; }
+.top-container a {
+  color: #00675c;
+  border-right: 1px solid #1e776d;
+  background-color: #34cfbe;
+  border-radius: 3px;
+  padding-left: 4px;
+  padding-right: 6px;
+  padding-top: 20px;
+  padding-bottom: 2px;
+}
+
+.navbar {
+  margin: 20px;
+}
+
+.top-container ul.nav {
+  display: inline; 
+}
+.top-container ul.nav li {
+  display: inline; 
+}
 
 .action {
   position: relative; }
 
+.container {
+}
+
+.row {
+  padding-left: 50px;
+  margin-bottom: 10px;
+}
+
+form {
+    padding: 0px;
+}
+
+#gluu_form {
+  top: 3em;
+  bottom: 10em;
+  position: absolute;
+  left: 0px;
+  right: 0px;
+}
+
+.prison {
+  position: absolute;
+  bottom: 0px;
+  top: 2em;
+  left:2%;
+  right: 2%;
+}
+
+.paste-container {
+  margin-left: 2%;
+  margin-right: 2%;
+}
+
 #clear_code {
-  margin: 30px;
-  left: 30px;
-  right: 30px;
-  top: 50px;
-  bottom: 25%;
-  position: absolute; }
+  font-family: monospace;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  resize: none;
+}
 
 .dropzone.dz-clickable {
   position: absolute;
-  top: 75%;
-  left: 30px;
-  right: 30px;
-  bottom: 10px; }
+  height: 8em;
+  bottom: 1em;
+  margin: 0;
+  left: 0px;
+  right: 0px;
+  border-bottom: 1px solid rgb(172, 172, 172);
+}
+
+.dz-default {
+  text-align:center;
+  font-size: 4em;
+}
+
+.legal {
+  position: fixed;
+  bottom: 0px;
+  font-size: 0.6em;
+  text-align: center;
+  color: #999;
+  left: 0px;
+  right: 0px;
+  background-color: rgba(255,255,255,0.5);
+}
+
+.legal a {
+  color: #333;
+}
+
+.swhi {
+  margin: 20px;
+}
 
 .attachment {
   display: block; }
@@ -69,7 +153,9 @@ textarea {
   display: none; }
 
 #companions {
-  background-color: white; }
+  background-color: white;
+  margin-bottom: 20px;
+}
 
 pre code {
   font-size: 12px;
