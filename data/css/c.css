@@ -10,6 +10,13 @@ font-family: monospace;
 font-size: 1em;
 }
 
+.dz-default {
+	text-align:center;
+	font-size: 4em;
+}
+
+
+
 .top-container {
   position: relative;
 }
