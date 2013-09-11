@@ -2,9 +2,17 @@ body {
   font-family: monospace;
   margin-top: 0px; }
 
+
+select, button {
+background-color: white;
+border: 1px solid gray;
+font-family: monospace;
+font-size: 1em;
+}
+
 .top-container {
   position: relative;
-  font-size: 0.8em; }
+}
   .top-container a.brand {
     color: red; }
   .top-container ul.nav {
