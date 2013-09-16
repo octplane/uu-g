@@ -164,3 +164,23 @@ pre code {
 
 .f {
   width: 100%; }
+
+ol {
+    counter-reset: item;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+li {
+    display: block;
+}
+
+pre li:before {
+  text-align: right;
+  display: inline-block;
+  content: counter(item) "|";
+  counter-increment: item;
+  color: #BA2F39;
+  width: 3em;
+  margin-right: 1em;
+}

@@ -216,6 +216,7 @@ function setPasteto(content, lang) {
     cur_lang = detected;
     $('#hljs_lang').text(detected);
   }
+  number();
   $('#spare').text(content);
 
 }
@@ -248,4 +249,29 @@ function revealRaw() {
   $('#spare').select();
 }
 
+function number() {
+$('pre>code').each(function() {
+    var current = $(this),
+        lineStart = parseInt(current.data('line-start')),
+        lineFocus = parseInt(current.data('line-focus')),
+        items = current.html().split("\n"),
+        total = items.length,
+        result = '<ol ' + (!isNaN(lineStart) ? 'start="' + lineStart + '"' : '') + '>';
 
+    for (var i = 0; i < total; i++) {
+        if (i === (lineFocus - lineStart)) {
+            result += '<li class="hightlight">';
+        }
+        else {
+            result += '<li>';
+        }
+
+        result += items[i] + '</li>';
+    }
+
+    result += '</ol>';
+
+    var items = current.empty().append(result);
+});
+
+}
