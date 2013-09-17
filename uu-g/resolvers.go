@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -117,11 +118,11 @@ func (at *FsResolver) Cleanup() {
 	ds := DataScanner{at.baseFolder, list.New()}
 	ds.Scan()
 	for e := ds.Items.Front(); e != nil; e = e.Next() {
-		fmt.Printf("- %s\n", e.Value)
 		identifier, _ := e.Value.(string)
 		if at.expireChecker.HasExpired(identifier, at) {
-			fmt.Printf("%s has expired", identifier)
-			// delete item
+
+			fmt.Printf("[DEL] %s has expired\n", at.GetFilename(identifier))
+			syscall.Unlink(at.GetFilename(identifier))
 		}
 	}
 }

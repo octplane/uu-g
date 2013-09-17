@@ -186,6 +186,9 @@ func attachmentHandler(ctx *web.Context, attachmentName string) {
 }
 
 func viewHandler(ctx *web.Context, basename string) {
+	globals.pasteResolver.Cleanup()
+	globals.attnResolver.Cleanup()
+
 	data, err := globals.pasteResolver.LoadItem(basename)
 	if err != nil {
 		panic(err)
