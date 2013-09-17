@@ -61,9 +61,11 @@ func (pc *PasteChecker) HasExpired(identifier string, res Resolver) bool {
 	if err != nil {
 		panic(err)
 	}
-	expire, _ := strconv.ParseInt(content["expire"], 10, 64)
-	if time.Unix(expire, 0).Before(time.Now()) {
-		return true
+	if content["expire"] != "-1" {
+		expire, _ := strconv.ParseInt(content["expire"], 10, 64)
+		if time.Unix(expire, 0).Before(time.Now()) {
+			return true
+		}
 	}
 	return false
 }
