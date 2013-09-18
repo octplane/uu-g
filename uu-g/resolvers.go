@@ -59,7 +59,10 @@ func (pc *AttachmentChecker) LoadItem(identifier string, res Resolver) (map[stri
 func (pc *PasteChecker) HasExpired(identifier string, res Resolver) bool {
 	content, err := pc.LoadItem(identifier, res)
 	if err != nil {
-		panic(err)
+		fmt.Printf("[EMERG] Error while loading paste %s:\n", identifier)
+		fmt.Printf("[EMERG] %v\n", err)
+		// Keep under the elbow for a while
+		return false
 	}
 	if content["expire"] != "-1" {
 		expire, _ := strconv.ParseInt(content["expire"], 10, 64)
