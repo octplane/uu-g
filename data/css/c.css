@@ -1,6 +1,12 @@
 body {
   font-family: Helvetica;
-  margin: 0px; }
+  margin: 0px;
+  background-image: url(/img/uu.jpg);
+  background-repeat: no-repeat;
+  background-position: 90% 20px;
+
+
+}
 
 /* http://colorschemedesigner.com/#3f31Tw0w0w0w0 */
 
@@ -39,6 +45,11 @@ select, button{
   background-image:-webkit-gradient(linear, 50% 0%, 50% 100%, from(rgb(238, 238, 238)), to(rgb(204, 204, 204)));
   background-image:-moz-linear-gradient(-90deg, rgb(238, 238, 238), rgb(204, 204, 204));
 }
+
+select[disabled] {
+  color: GrayText;
+}
+
 button:hover{
   cursor: pointer;
   text-decoration:none;
@@ -85,28 +96,28 @@ button:active{
 
 .expi {
   margin-left: 10px;
-  background-color: #FC717B;
   padding: 4px;
-  color: white;
+  color: black;
+  font-size:14px;
+  font-family:arial, serif;
+
+
 }
 
 
 .top-container {
   position: relative;
+  background-color: black;
+  padding: 3px;
+
 }
 .top-container a {
-  color: #00675c;
-  border-right: 1px solid #1e776d;
-  background-color: #34cfbe;
-  border-radius: 3px;
-  padding-left: 4px;
-  padding-right: 6px;
-  padding-top: 20px;
-  padding-bottom: 2px;
+  color: white;
+  text-decoration: none;
 }
 
 .navbar {
-  margin: 20px;
+  margin: 0px;
 }
 
 .top-container ul.nav {
@@ -199,7 +210,8 @@ form {
 
 textarea {
   border: 1px dashed #66cccc;
-  background-color: #fdf6e3; }
+  background-color: #fdf6e3;
+  opacity: 0.9 }
 
 .clickable {
   cursor: pointer;
