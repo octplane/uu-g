@@ -14,23 +14,6 @@ import (
 	"strings"
 )
 
-type resolvers struct {
-	pasteResolver *PasteResolver
-	attnResolver  *AttachmentResolver
-}
-
-func (r *resolvers) cleanup() {
-	r.pasteResolver.Cleanup()
-	r.attnResolver.Cleanup()
-}
-
-var res = resolvers{}
-
-func init() {
-	res.pasteResolver = &PasteResolver{FsResolver{"pastes/", ".uu", &PasteChecker{}}}
-	res.attnResolver = &AttachmentResolver{FsResolver{"attn/", ".data", &AttachmentChecker{}}}
-}
-
 func fileExists(dir string) bool {
 	info, err := os.Stat(dir)
 	if err != nil {
@@ -104,8 +87,6 @@ func AttachmentHandler(ctx *web.Context, attachmentName string) {
 }
 
 func ViewHandler(ctx *web.Context, basename string) {
-	res.cleanup()
-
 	data, err := res.pasteResolver.LoadItem(basename)
 	if _, ok := err.(*MissingPasteError); ok {
 		ctx.NotFound(fmt.Sprintf("%s is no longer available.", basename))

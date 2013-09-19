@@ -17,8 +17,33 @@ import (
 	"time"
 )
 
+type resolvers struct {
+	pasteResolver *PasteResolver
+	attnResolver  *AttachmentResolver
+}
+
+func (r *resolvers) cleanup() {
+	fmt.Print("[DEL] Waking up\n")
+	r.pasteResolver.cleanup()
+	r.attnResolver.cleanup()
+}
+
+var res = resolvers{}
+
+func init() {
+	res.pasteResolver = &PasteResolver{FsResolver{"pastes/", ".uu", &PasteChecker{}}}
+	res.attnResolver = &AttachmentResolver{FsResolver{"attn/", ".data", &AttachmentChecker{}}}
+
+	go func() {
+		for true {
+			res.cleanup()
+			time.Sleep(60 * time.Second)
+		}
+	}()
+}
+
 type Resolver interface {
-	Cleanup()
+	cleanup()
 	GetNextIdentifier() (fname string, mnem string)
 	GetNextIdentifierWithPrefix(prefix string) (fname string, mnem string)
 	GetFilename(identifier string) string
@@ -131,14 +156,14 @@ func (at *FsResolver) GetFilename(identifier string) string {
 	return at.baseFolder + identifier + at.baseExtension
 }
 
-func (at *FsResolver) Cleanup() {
+func (at *FsResolver) cleanup() {
 	ds := DataScanner{at.baseFolder, list.New()}
 	ds.Scan()
 	for e := ds.Items.Front(); e != nil; e = e.Next() {
 		identifier, _ := e.Value.(string)
 		if at.expireChecker.HasExpired(identifier, at) {
 
-			fmt.Printf("[DEL] %s has expired\n", at.GetFilename(identifier))
+			fmt.Printf("[DEL] %s has expired, deleting\n", at.GetFilename(identifier))
 			syscall.Unlink(at.GetFilename(identifier))
 		}
 	}
