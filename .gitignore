@@ -7,6 +7,7 @@
 _obj
 _test
 pastes
+attn
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -21,5 +22,5 @@ _cgo_export.*
 _testmain.go
 
 *.exe
-uu
+uu-g
 src/github.com/

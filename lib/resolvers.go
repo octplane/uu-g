@@ -1,4 +1,4 @@
-package main
+package uu
 
 import (
 	"container/list"
@@ -77,10 +77,22 @@ func (res *FsResolver) LoadItem(identifier string) (map[string]string, error) {
 	return res.expireChecker.LoadItem(identifier, res)
 }
 
+type MissingPasteError struct {
+	identifier string
+}
+
+func (f MissingPasteError) Error() string {
+	return fmt.Sprintf("uu: unable to load paste \"%s\"", f.identifier)
+}
+
 func (pc *PasteChecker) LoadItem(identifier string, res Resolver) (map[string]string, error) {
 	fname := res.GetFilename(identifier)
 	content, err := ioutil.ReadFile(fname)
+	if e, ok := err.(*os.PathError); ok && e.Err == syscall.ENOENT {
+		return nil, &MissingPasteError{identifier}
+	}
 	if err != nil {
+		fmt.Printf("Error while Loading pastes %v\n", err)
 		return nil, err
 	}
 	var data map[string]string
