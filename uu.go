@@ -17,5 +17,6 @@ func main() {
 	web.Post("/file-upload", uu.FileHandler)
 	web.Get("/p/(.*)", uu.ViewHandler)
 	web.Get("/a/(.*)", uu.AttachmentHandler)
+	web.Get("/(.*)", uu.AnyHandler)
 	web.Run(*hostAndPort)
 }
