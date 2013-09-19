@@ -23,6 +23,15 @@ func fileExists(dir string) bool {
 	return !info.IsDir()
 }
 
+func AnyHandler(ctxt *web.Context, pageName string) {
+	var buf bytes.Buffer
+	var scope = make(map[string]interface{})
+
+	output := tmpl(pageName, scope)
+	buf.WriteString(output)
+	io.Copy(ctxt, &buf)
+}
+
 func SlashHandler(ctxt *web.Context) {
 	// Main Router
 	var buf bytes.Buffer

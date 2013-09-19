@@ -125,6 +125,7 @@ button:active{
 }
 .top-container ul.nav li {
   display: inline; 
+  margin-left: 50px;
 }
 
 .action {
