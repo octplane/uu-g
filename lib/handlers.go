@@ -27,7 +27,16 @@ func AnyHandler(ctxt *web.Context, pageName string) {
 	var buf bytes.Buffer
 	var scope = make(map[string]interface{})
 
-	output := tmpl(pageName, scope)
+	output, err := tmpl(pageName, scope)
+	if e, ok := err.(*MissingTemplateError); ok {
+		ctxt.NotFound(fmt.Sprintf("%s cannot be found", e.Identifier))
+		return
+	}
+	if err != nil {
+		ctxt.Abort(500, err.Error())
+		return
+	}
+
 	buf.WriteString(output)
 	io.Copy(ctxt, &buf)
 }
@@ -40,7 +49,16 @@ func SlashHandler(ctxt *web.Context) {
 	scope["snippet"] = "Copie Priv&eacute;e is a new kind of paste website. It will try to auto-detect the language you're pasting."
 	scope["expiries"] = expiries
 
-	output := tmpl("index", scope)
+	output, err := tmpl("index", scope)
+	if e, ok := err.(*MissingTemplateError); ok {
+		ctxt.NotFound(fmt.Sprintf("%s cannot be found", e.Identifier))
+		return
+	}
+	if err != nil {
+		ctxt.Abort(500, err.Error())
+		return
+	}
+
 	buf.WriteString(output)
 	io.Copy(ctxt, &buf)
 }
@@ -67,7 +85,7 @@ func FileHandler(ctxt *web.Context) {
 	ctxt.WriteString(fmt.Sprintf("%s", attachment_mnem))
 }
 
-func AttachmentHandler(ctx *web.Context, attachmentName string) {
+func AttachmentHandler(ctxt *web.Context, attachmentName string) {
 	var baseName = attachmentName[0 : len(attachmentName)-len(path.Ext(attachmentName))]
 	staticFile := res.attnResolver.GetFilename(baseName)
 	if fileExists(staticFile) {
@@ -84,25 +102,25 @@ func AttachmentHandler(ctx *web.Context, attachmentName string) {
 		ctype := http.DetectContentType(b)
 		_, err = f.Seek(0, os.SEEK_SET) // rewind to output whole file
 		if err != nil {
-			http.Error(ctx, "seeker can't seek", http.StatusInternalServerError)
+			http.Error(ctxt, "seeker can't seek", http.StatusInternalServerError)
 			return
 		}
-		ctx.Header().Set("Content-Type", ctype)
+		ctxt.Header().Set("Content-Type", ctype)
 
-		http.ServeFile(ctx, ctx.Request, staticFile)
+		http.ServeFile(ctxt, ctxt.Request, staticFile)
 		return
 	}
-	ctx.NotFound(fmt.Sprintf("%s was not found.", baseName))
+	ctxt.NotFound(fmt.Sprintf("%s was not found.", baseName))
 }
 
-func ViewHandler(ctx *web.Context, basename string) {
+func ViewHandler(ctxt *web.Context, basename string) {
 	data, err := res.pasteResolver.LoadItem(basename)
 	if _, ok := err.(*MissingPasteError); ok {
-		ctx.NotFound(fmt.Sprintf("%s is no longer available.", basename))
+		ctxt.NotFound(fmt.Sprintf("%s is no longer available.", basename))
 		return
 	}
 	if err != nil {
-		ctx.Abort(500, err.Error())
+		ctxt.Abort(500, err.Error())
 		return
 	}
 	// Main Router
@@ -117,7 +135,15 @@ func ViewHandler(ctx *web.Context, basename string) {
 	}
 	scope["expire"] = expiryStringFromTime(expire)
 
-	output := tmpl("index", scope)
+	output, err := tmpl("index", scope)
+	if e, ok := err.(*MissingTemplateError); ok {
+		ctxt.NotFound(fmt.Sprintf("%s cannot be found", e.Identifier))
+		return
+	}
+	if err != nil {
+		ctxt.Abort(500, err.Error())
+		return
+	}
 	buf.WriteString(output)
-	io.Copy(ctx, &buf)
+	io.Copy(ctxt, &buf)
 }

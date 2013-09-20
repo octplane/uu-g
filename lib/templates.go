@@ -2,10 +2,12 @@ package uu
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
 )
 
 var templates map[string]*template.Template = make(map[string]*template.Template)
@@ -16,7 +18,15 @@ func Yield(tmpl string) template.HTML {
 	return template.HTML(val)
 }
 
-func get_or_load(templateName string) *template.Template {
+type MissingTemplateError struct {
+	Identifier string
+}
+
+func (f MissingTemplateError) Error() string {
+	return fmt.Sprintf("uu: unable to load view \"%s\"", f.Identifier)
+}
+
+func get_or_load(templateName string) (*template.Template, error) {
 	tmpl, exists := templates[templateName]
 
 	if debug.InDebug() || !exists {
@@ -27,21 +37,30 @@ func get_or_load(templateName string) *template.Template {
 		}
 		sourcePath := filepath.Join(cwd, "./views/"+templateName+".tmpl")
 		b, err = ioutil.ReadFile(sourcePath)
+		if e, ok := err.(*os.PathError); ok && e.Err == syscall.ENOENT {
+			return nil, &MissingTemplateError{templateName}
+		}
+
 		if err != nil {
-			panic(err)
+			fmt.Printf("Error while Loading view %s: %v\n", templateName, err)
+			return nil, err
 		}
 		fMap := template.FuncMap{"yield": Yield}
 		tmpl = template.Must(template.New(templateName).Funcs(fMap).Parse(string(b)))
 		templates[templateName] = tmpl
 	}
 
-	return tmpl
+	return tmpl, nil
 }
 
 func raw_tmpl(templateName string, context map[string]interface{}) (string, error) {
-	tmpl := get_or_load(templateName)
+	tmpl, err := get_or_load(templateName)
+	if err != nil {
+		return "", err
+	}
+
 	var templated bytes.Buffer
-	err := tmpl.Execute(&templated, context)
+	err = tmpl.Execute(&templated, context)
 	if err != nil {
 		return "", err
 	}
@@ -49,21 +68,21 @@ func raw_tmpl(templateName string, context map[string]interface{}) (string, erro
 	return templated.String(), nil
 }
 
-func tmpl_with_layout(layoutName string, templateName string, context map[string]interface{}) string {
+func tmpl_with_layout(layoutName string, templateName string, context map[string]interface{}) (string, error) {
 	// render content
 	content, err := raw_tmpl(templateName, context)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	context["content"] = template.HTML(content)
 
 	output, err := raw_tmpl(layoutName, context)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return output
+	return output, nil
 }
 
-func tmpl(templateName string, context map[string]interface{}) string {
+func tmpl(templateName string, context map[string]interface{}) (string, error) {
 	return tmpl_with_layout(defaultLayoutName, templateName, context)
 }
