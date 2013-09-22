@@ -23,7 +23,7 @@ type resolvers struct {
 }
 
 func (r *resolvers) cleanup() {
-	fmt.Print("[DEL] Waking up\n")
+	fmt.Print("[DEL] Waking pouet up\n")
 	r.pasteResolver.cleanup()
 	r.attnResolver.cleanup()
 }
@@ -74,6 +74,23 @@ type PasteChecker struct{}
 type AttachmentChecker struct{}
 
 func (at *AttachmentChecker) HasExpired(filename string, res Resolver) bool {
+	dashPos := strings.Index(filename, "-")
+	if dashPos == -1 {
+		fmt.Printf("[ERR] Unable to find timestamp in attachment %s\n", filename)
+		return false
+	}
+	expire, err := strconv.ParseInt(filename[dashPos+1:len(filename)], 10, 64)
+	if err != nil {
+		fmt.Printf("[ERR] error while parsing timestamp %s for %s\n", expire, filename)
+		fmt.Print(err)
+	}
+	if expire == -1 {
+		return false
+	}
+	if time.Unix(expire, 0).Before(time.Now()) {
+		return true
+	}
+	fmt.Printf("expire is %d\n", expire)
 	return false
 }
 
@@ -161,6 +178,7 @@ func (at *FsResolver) cleanup() {
 	ds.Scan()
 	for e := ds.Items.Front(); e != nil; e = e.Next() {
 		identifier, _ := e.Value.(string)
+		debug.Printf("Checking %s\n", identifier)
 		if at.expireChecker.HasExpired(identifier, at) {
 
 			fmt.Printf("[DEL] %s has expired, deleting\n", at.GetFilename(identifier))
