@@ -70,6 +70,7 @@ function wakeUp() {
     displayError();
   }
   $('#reveal-but').click(revealRaw);
+  $('#wrap-but').click(wrapidou);
   $('#code').show();
   $('#spare').hide();
   $('#spare').height(80*$(window).height()/100);
@@ -247,6 +248,10 @@ function revealRaw() {
   $('#spare').toggle();
   $('#code').toggle();
   $('#spare').select();
+}
+
+function wrapidou() {
+  $('pre').toggleClass("wrap");
 }
 
 function number() {
