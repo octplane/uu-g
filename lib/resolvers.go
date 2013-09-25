@@ -23,16 +23,16 @@ type resolvers struct {
 }
 
 func (r *resolvers) cleanup() {
-	fmt.Print("[DEL] Waking pouet up\n")
+	fmt.Print("[DEL] Waking up\n")
 	r.pasteResolver.cleanup()
 	r.attnResolver.cleanup()
 }
 
 var res = resolvers{}
 
-func init() {
-	res.pasteResolver = &PasteResolver{FsResolver{"pastes/", ".uu", &PasteChecker{}}}
-	res.attnResolver = &AttachmentResolver{FsResolver{"attn/", ".data", &AttachmentChecker{}}}
+func InitResolvers(baseFolder string) {
+	res.pasteResolver = &PasteResolver{FsResolver{path.Join(baseFolder, "/pastes/"), ".uu", &PasteChecker{}}}
+	res.attnResolver = &AttachmentResolver{FsResolver{path.Join(baseFolder, "/attn/"), ".data", &AttachmentChecker{}}}
 
 	go func() {
 		for true {
@@ -40,6 +40,9 @@ func init() {
 			time.Sleep(60 * time.Second)
 		}
 	}()
+}
+
+func init() {
 }
 
 type Resolver interface {
@@ -170,7 +173,7 @@ func (at *FsResolver) GetNextIdentifierWithPrefix(prefix string) (fname string, 
 }
 
 func (at *FsResolver) GetFilename(identifier string) string {
-	return at.baseFolder + identifier + at.baseExtension
+	return path.Join(at.baseFolder, identifier+at.baseExtension)
 }
 
 func (at *FsResolver) cleanup() {
@@ -202,5 +205,6 @@ func (d DataScanner) visit(pth string, info os.FileInfo, err error) error {
 }
 
 func (d DataScanner) Scan() {
+	debug.Printf("Scanning %s\n", d.root)
 	_ = filepath.Walk(d.root, d.visit)
 }

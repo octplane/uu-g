@@ -13,6 +13,8 @@ import (
 var templates map[string]*template.Template = make(map[string]*template.Template)
 var defaultLayoutName string = "layout"
 
+var DefaultTemplateFolder = "./views/"
+
 func Yield(tmpl string) template.HTML {
 	val, _ := raw_tmpl(tmpl, nil)
 	return template.HTML(val)
@@ -31,12 +33,9 @@ func get_or_load(templateName string) (*template.Template, error) {
 
 	if debug.InDebug() || !exists {
 		var b []byte
-		cwd, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-		sourcePath := filepath.Join(cwd, "./views/"+templateName+".tmpl")
-		b, err = ioutil.ReadFile(sourcePath)
+
+		sourcePath := filepath.Join(DefaultTemplateFolder, templateName+".tmpl")
+		b, err := ioutil.ReadFile(sourcePath)
 		if e, ok := err.(*os.PathError); ok && e.Err == syscall.ENOENT {
 			return nil, &MissingTemplateError{templateName}
 		}

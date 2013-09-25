@@ -7,11 +7,15 @@ import (
 )
 
 func main() {
-	web.Config.StaticDir = "data"
+	web.Config.StaticDir = "__public"
+	uu.DefaultTemplateFolder = "./__views"
 
-	var hostAndPort = flag.String("l", ":8080", "IP and port to listen to")
+	hostAndPort := flag.String("l", ":8080", "IP and port to listen to")
+	dataPath := flag.String("d", ".", "Relative path to attachments and pastes")
 
 	flag.Parse()
+
+	uu.InitResolvers(*dataPath)
 	web.Get("/", uu.SlashHandler)
 	web.Post("/paste", uu.PostHandler)
 	web.Post("/file-upload", uu.FileHandler)
