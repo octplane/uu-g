@@ -23,6 +23,8 @@ func fileExists(dir string) bool {
 	return !info.IsDir()
 }
 
+var internalAssets = false
+
 func AnyHandler(ctxt *web.Context, pageName string) {
 	var buf bytes.Buffer
 	var scope = make(map[string]interface{})

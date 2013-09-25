@@ -31,6 +31,7 @@ func (r *resolvers) cleanup() {
 var res = resolvers{}
 
 func InitResolvers(baseFolder string) {
+	fmt.Printf("internal is %v\n", internalAssets)
 	res.pasteResolver = &PasteResolver{FsResolver{path.Join(baseFolder, "/pastes/"), ".uu", &PasteChecker{}}}
 	res.attnResolver = &AttachmentResolver{FsResolver{path.Join(baseFolder, "/attn/"), ".data", &AttachmentChecker{}}}
 
@@ -127,7 +128,7 @@ type MissingPasteError struct {
 }
 
 func (f MissingPasteError) Error() string {
-	return fmt.Sprintf("uu: unable to load paste \"%s\"", f.identifier)
+	return fmt.Sprintf("[ERR] Unable to load paste \"%s\"", f.identifier)
 }
 
 func (pc *PasteChecker) LoadItem(identifier string, res Resolver) (map[string]string, error) {
@@ -137,7 +138,7 @@ func (pc *PasteChecker) LoadItem(identifier string, res Resolver) (map[string]st
 		return nil, &MissingPasteError{identifier}
 	}
 	if err != nil {
-		fmt.Printf("Error while Loading pastes %v\n", err)
+		fmt.Printf("[ERR] Unable to load paste %v\n", err)
 		return nil, err
 	}
 	var data map[string]string
@@ -181,7 +182,7 @@ func (at *FsResolver) cleanup() {
 	ds.Scan()
 	for e := ds.Items.Front(); e != nil; e = e.Next() {
 		identifier, _ := e.Value.(string)
-		debug.Printf("Checking %s\n", identifier)
+		debug.Printf("[INF] Checking %s\n", identifier)
 		if at.expireChecker.HasExpired(identifier, at) {
 
 			fmt.Printf("[DEL] %s has expired, deleting\n", at.GetFilename(identifier))
@@ -205,6 +206,6 @@ func (d DataScanner) visit(pth string, info os.FileInfo, err error) error {
 }
 
 func (d DataScanner) Scan() {
-	debug.Printf("Scanning %s\n", d.root)
+	debug.Printf("[INF] Scanning %s\n", d.root)
 	_ = filepath.Walk(d.root, d.visit)
 }

@@ -27,7 +27,7 @@ func (d DataScanner) Scan() {
 
 }
 
-func main2() {
+func main() {
 	flag.Parse()
 	root := flag.Arg(0)
 	d := DataScanner{root: root}
