@@ -24,3 +24,5 @@ _testmain.go
 *.exe
 uu-g
 src/github.com/
+go-bindata/
+data_scanner/data_scanner
