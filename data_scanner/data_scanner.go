@@ -15,6 +15,8 @@ type DataScanner struct {
 }
 
 func (d DataScanner) visit(fullpath string, info os.FileInfo, err error) error {
+	rootAbs, _ := filepath.Abs(d.root)
+
 	baseName := strings.TrimPrefix(fullpath, d.root)
 	// Keep only first level directories
 	if info.IsDir() && len(baseName) > 0 && !strings.Contains(baseName, "/") {
@@ -26,7 +28,7 @@ func (d DataScanner) visit(fullpath string, info os.FileInfo, err error) error {
 			fmt.Fprintf(os.Stderr, "[e] %s\n", err)
 			return err
 		}
-		out, _ := filepath.Abs(path.Join(d.root, "../bindata", baseName))
+		out, _ := filepath.Abs(path.Join(d.root, "../bindata", baseName+".go"))
 
 		// Create missing folder if needed
 		dir, _ := filepath.Split(out)
@@ -41,16 +43,26 @@ func (d DataScanner) visit(fullpath string, info os.FileInfo, err error) error {
 			return err
 		}
 		// Translate binary to Go code.
-		bindata.Translate(fs, fd, "uu", bindata.SafeFuncname(baseName, "uu"), false, false)
-		fd.Close()
+		funcname := bindata.SafeFuncname(baseName, "uu")
+		bindata.Translate(fs, fd, "uu", funcname, false, false)
 		fs.Close()
+		tocRoot, _ := filepath.Abs(path.Join(d.root, "../bindata"))
+		err = bindata.CreateTOC(tocRoot, "uu")
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "[e] %s\n", err)
+			return err
+		}
+
+		bindata.WriteTOCInit(fd, in, rootAbs, funcname)
+		fd.Close()
+
 	}
 	return nil
 }
 
 func (d DataScanner) Scan() {
-	err := filepath.Walk(d.root, d.visit)
-	fmt.Printf("filepath.Walk() returned %v\n", err)
+	filepath.Walk(d.root, d.visit)
 
 }
 
