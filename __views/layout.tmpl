@@ -6,6 +6,11 @@
 	<link rel="stylesheet" type="text/css" href="/css/c.css" />
 	<link rel="stylesheet" type="text/css" href="/css/basic.css" />
 	<link rel="stylesheet" type="text/css" href="/hi/styles/solarized_light.css" />
+
+	<script type="text/javascript" src="http://assets.freshdesk.com/widget/freshwidget.js"></script>
+	<style type="text/css" media="screen, projection">
+		@import url(http://assets.freshdesk.com/widget/freshwidget.css); 
+	</style> 
   </head>
 <body>
  {{ yield "navbar" }}
@@ -16,5 +21,9 @@
 <script type="text/javascript" src="/hi/highlight.pack.js"></script>
 <script type="text/javascript" src="/js/sjcl.js"></script>
 <script type="text/javascript" src="/js/dropzone.min.js"></script>
+<script type="text/javascript">
+	FreshWidget.init("", {"queryString": "&widgetType=popup", "widgetType": "popup", "buttonText": "Support", "buttonColor": "white", "buttonBg": "#000000", "backgroundImage": "", "alignment": "4", "offset": "235px", "formHeight": "500px", "url": "http://privatepaste.freshdesk.com"} );
+</script>
+
 </body>
 </html>
