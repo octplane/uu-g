@@ -1,4 +1,3 @@
-var hljs_languages;
 
 var cur_lang;
 var password;
@@ -59,12 +58,13 @@ function wakeUp() {
 
     try {
       var ct = sjcl.decrypt(password, data);
-      setPasteto(ct);
+      setPasteto(ct, parms["lang"]);
     } catch(e) {
       if(e instanceof sjcl.exception.corrupt) {
         displayError();
       }
-    } 
+    }
+    $("#paste-url").attr("value", document.location.href).focus().select();
     setAttachmentsTo(atts);
   }else {
     displayError();
@@ -87,6 +87,10 @@ function RNGisReady() {
 
 if(encrypted) {
   $(document).ready(function() {wakeUp()});
+} else {
+  $(document).ready(function () {
+    $("#clear_code").focus();
+  });
 }
 
 
@@ -100,18 +104,6 @@ $(document).ready(function() {
     });
   }
 
-  hljs_languages = Object.keys(hljs.LANGUAGES);
-  $('#placeholder').replaceWith(function() {
-    var o ='';
-    for(i=0; i < hljs_languages.length; i++) {
-      if(hljs_languages[i] == cur_lang)
-      {
-        continue;
-      }
-      o = o + changeToLink(hljs_languages[i]) +" ";
-    }
-    return o
-  });
 
   $('#never_expire').change( function(o) {
     var state = $(this).is(':checked');
@@ -210,16 +202,36 @@ function setPasteto(content, lang) {
     c.text(content);
     return c;
   });
-  hljs.highlightBlock($('#code')[0]);
-
-  if(lang == undefined) {
-    var detected = $($("#code")[0]).attr('class');
+  var codeBlock = $("#code")[0];
+  p = hljs.highlightBlock(codeBlock);
+  var detected = codeBlock.result && codeBlock.result.language;
+  var second = codeBlock.second_best && codeBlock.second_best.language;
+  if(lang) {
+    cur_lang = lang;
+  } else {
     cur_lang = detected;
-    $('#hljs_lang').text(detected);
+  }
+  var others = [detected, second]
+
+  $('#hljs_lang').text(cur_lang);
+
+  if(second) {
+    $(".swhi").show();
+    $('#placeholder').replaceWith(function() {
+      var o = "";
+      for(l in others) {
+        var la = others[l];
+        if(cur_lang != la) {
+          o = o + " " + changeToLink(la);
+        }
+      }
+      return o
+    });
+  } else {
+    $(".swhi").hide();
   }
   number();
   $('#spare').text(content);
-
 }
 
 function setAttachmentsTo(content) {
