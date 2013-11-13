@@ -408,7 +408,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
     */
 
 
-    Dropzone.prototype.events = ["drop", "dragstart", "dragend", "dragenter", "dragover", "dragleave", "selectedfiles", "addedfile", "removedfile", "thumbnail", "error", "processing", "processingmultiple", "uploadprogress", "totaluploadprogress", "sending", "sendingmultiple", "success", "successmultiple", "canceled", "canceledmultiple", "complete", "completemultiple", "reset"];
+    Dropzone.prototype.events = ["drop", "dragstart", "dragend", "dragenter", "dragover", "dragleave", "selectedfiles", "addedfile", "removedfile", "thumbnail", "error", "errormultiple", "processing", "processingmultiple", "uploadprogress", "totaluploadprogress", "sending", "sendingmultiple", "success", "successmultiple", "canceled", "canceledmultiple", "complete", "completemultiple", "reset", "maxfilesexceeded"];
 
     Dropzone.prototype.defaultOptions = {
       url: null,
@@ -422,6 +422,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
       maxThumbnailFilesize: 10,
       thumbnailWidth: 100,
       thumbnailHeight: 100,
+      maxFiles: null,
       params: {},
       clickable: true,
       ignoreHiddenFiles: true,
@@ -439,6 +440,8 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
       dictCancelUpload: "Cancel upload",
       dictCancelUploadConfirmation: "Are you sure you want to cancel this upload?",
       dictRemoveFile: "Remove file",
+      dictRemoveFileConfirmation: null,
+      dictMaxFilesExceeded: "You can only upload {{maxFiles}} files.",
       accept: function(file, done) {
         return done();
       },
@@ -540,19 +543,29 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
             e.preventDefault();
             e.stopPropagation();
             if (file.status === Dropzone.UPLOADING) {
-              if (window.confirm(_this.options.dictCancelUploadConfirmation)) {
+              return Dropzone.confirm(_this.options.dictCancelUploadConfirmation, function() {
+                return _this.removeFile(file);
+              });
+            } else {
+              if (_this.options.dictRemoveFileConfirmation) {
+                return Dropzone.confirm(_this.options.dictRemoveFileConfirmation, function() {
+                  return _this.removeFile(file);
+                });
+              } else {
                 return _this.removeFile(file);
               }
-            } else {
-              return _this.removeFile(file);
             }
           });
-          return file.previewElement.appendChild(file._removeLink);
+          file.previewElement.appendChild(file._removeLink);
         }
+        return this._updateMaxFilesReachedClass();
       },
       removedfile: function(file) {
         var _ref;
-        return (_ref = file.previewElement) != null ? _ref.parentNode.removeChild(file.previewElement) : void 0;
+        if ((_ref = file.previewElement) != null) {
+          _ref.parentNode.removeChild(file.previewElement);
+        }
+        return this._updateMaxFilesReachedClass();
       },
       thumbnail: function(file, dataUrl) {
         var thumbnailElement;
@@ -566,6 +579,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
         file.previewElement.classList.add("dz-error");
         return file.previewElement.querySelector("[data-dz-errormessage]").textContent = message;
       },
+      errormultiple: noop,
       processing: function(file) {
         file.previewElement.classList.add("dz-processing");
         if (file._removeLink) {
@@ -593,6 +607,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
         }
       },
       completemultiple: noop,
+      maxfilesexceeded: noop,
       previewTemplate: "<div class=\"dz-preview dz-file-preview\">\n  <div class=\"dz-details\">\n    <div class=\"dz-filename\"><span data-dz-name></span></div>\n    <div class=\"dz-size\" data-dz-size></div>\n    <img data-dz-thumbnail />\n  </div>\n  <div class=\"dz-progress\"><span class=\"dz-upload\" data-dz-uploadprogress></span></div>\n  <div class=\"dz-success-mark\"><span>✔</span></div>\n  <div class=\"dz-error-mark\"><span>✘</span></div>\n  <div class=\"dz-error-message\"><span data-dz-errormessage></span></div>\n</div>"
     };
 
@@ -630,8 +645,11 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
       element.dropzone = this;
       elementOptions = (_ref = Dropzone.optionsForElement(this.element)) != null ? _ref : {};
       this.options = extend({}, this.defaultOptions, elementOptions, options != null ? options : {});
+      if (this.options.forceFallback || !Dropzone.isBrowserSupported()) {
+        return this.options.fallback.call(this);
+      }
       if (this.options.url == null) {
-        this.options.url = this.element.action;
+        this.options.url = this.element.getAttribute("action");
       }
       if (!this.options.url) {
         throw new Error("No URL provided.");
@@ -644,9 +662,6 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
         delete this.options.acceptedMimeTypes;
       }
       this.options.method = this.options.method.toUpperCase();
-      if (this.options.forceFallback || !Dropzone.isBrowserSupported()) {
-        return this.options.fallback.call(this);
-      }
       if ((fallback = this.getExistingFallback()) && fallback.parentNode) {
         fallback.parentNode.removeChild(fallback);
       }
@@ -733,9 +748,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
           }
           _this.hiddenFileInput = document.createElement("input");
           _this.hiddenFileInput.setAttribute("type", "file");
-          if (_this.options.uploadMultiple) {
-            _this.hiddenFileInput.setAttribute("multiple", "multiple");
-          }
+          _this.hiddenFileInput.setAttribute("multiple", "multiple");
           if (_this.options.acceptedFiles != null) {
             _this.hiddenFileInput.setAttribute("accept", _this.options.acceptedFiles);
           }
@@ -801,8 +814,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
             },
             "drop": function(e) {
               noPropagation(e);
-              _this.drop(e);
-              return _this.emit("drop", e);
+              return _this.drop(e);
             },
             "dragend": function(e) {
               return _this.emit("dragend", e);
@@ -980,11 +992,20 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
       return "<strong>" + (Math.round(size) / 10) + "</strong> " + string;
     };
 
+    Dropzone.prototype._updateMaxFilesReachedClass = function() {
+      if (this.options.maxFiles && this.getAcceptedFiles().length >= this.options.maxFiles) {
+        return this.element.classList.add("dz-max-files-reached");
+      } else {
+        return this.element.classList.remove("dz-max-files-reached");
+      }
+    };
+
     Dropzone.prototype.drop = function(e) {
       var files, items;
       if (!e.dataTransfer) {
         return;
       }
+      this.emit("drop", e);
       files = e.dataTransfer.files;
       this.emit("selectedfiles", files);
       if (files.length) {
@@ -1029,6 +1050,9 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
         return done(this.options.dictFileTooBig.replace("{{filesize}}", Math.round(file.size / 1024 / 10.24) / 100).replace("{{maxFilesize}}", this.options.maxFilesize));
       } else if (!Dropzone.isValidFile(file, this.options.acceptedFiles)) {
         return done(this.options.dictInvalidFileType);
+      } else if (this.options.maxFiles && this.getAcceptedFiles().length >= this.options.maxFiles) {
+        done(this.options.dictMaxFilesExceeded.replace("{{maxFiles}}", this.options.maxFiles));
+        return this.emit("maxfilesexceeded", file);
       } else {
         return this.options.accept.call(this, file, done);
       }
@@ -1052,7 +1076,6 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
           file.accepted = false;
           return _this._errorProcessing([file], error);
         } else {
-          file.accepted = true;
           return _this.enqueueFile(file);
         }
       });
@@ -1069,6 +1092,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
 
     Dropzone.prototype.enqueueFile = function(file) {
       var _this = this;
+      file.accepted = true;
       if (file.status === Dropzone.ADDED) {
         file.status = Dropzone.QUEUED;
         if (this.options.autoProcessQueue) {
@@ -1169,12 +1193,15 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
       parallelUploads = this.options.parallelUploads;
       processingLength = this.getUploadingFiles().length;
       i = processingLength;
+      if (processingLength >= parallelUploads) {
+        return;
+      }
       queuedFiles = this.getQueuedFiles();
       if (!(queuedFiles.length > 0)) {
         return;
       }
       if (this.options.uploadMultiple) {
-        return this.processFiles(queuedFiles.slice(0, parallelUploads));
+        return this.processFiles(queuedFiles.slice(0, parallelUploads - processingLength));
       } else {
         while (i < parallelUploads) {
           if (!queuedFiles.length) {
@@ -1253,7 +1280,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
     };
 
     Dropzone.prototype.uploadFiles = function(files) {
-      var file, formData, handleError, header, headers, input, inputName, inputType, key, name, progressObj, response, updateProgress, value, xhr, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3,
+      var file, formData, handleError, headerName, headerValue, headers, input, inputName, inputType, key, progressObj, response, updateProgress, value, xhr, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3,
         _this = this;
       xhr = new XMLHttpRequest();
       for (_i = 0, _len = files.length; _i < _len; _i++) {
@@ -1346,9 +1373,9 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
       if (this.options.headers) {
         extend(headers, this.options.headers);
       }
-      for (header in headers) {
-        name = headers[header];
-        xhr.setRequestHeader(header, name);
+      for (headerName in headers) {
+        headerValue = headers[headerName];
+        xhr.setRequestHeader(headerName, headerValue);
       }
       formData = new FormData();
       if (this.options.params) {
@@ -1421,7 +1448,7 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
 
   })(Em);
 
-  Dropzone.version = "3.6.1";
+  Dropzone.version = "3.7.1";
 
   Dropzone.options = {};
 
@@ -1449,9 +1476,6 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
 
   Dropzone.discover = function() {
     var checkElements, dropzone, dropzones, _i, _len, _results;
-    if (!Dropzone.autoDiscover) {
-      return;
-    }
     if (document.querySelectorAll) {
       dropzones = document.querySelectorAll(".dropzone");
     } else {
@@ -1587,6 +1611,14 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
     return elements;
   };
 
+  Dropzone.confirm = function(question, accepted, rejected) {
+    if (window.confirm(question)) {
+      return accepted();
+    } else if (rejected != null) {
+      return rejected();
+    }
+  };
+
   Dropzone.isValidFile = function(file, acceptedFiles) {
     var baseMimeType, mimeType, validType, _i, _len;
     if (!acceptedFiles) {
@@ -1704,14 +1736,19 @@ require.register("dropzone/lib/dropzone.js", function(exports, require, module){
     }
   };
 
-  contentLoaded(window, Dropzone.discover);
+  Dropzone._autoDiscoverFunction = function() {
+    if (Dropzone.autoDiscover) {
+      return Dropzone.discover();
+    }
+  };
+
+  contentLoaded(window, Dropzone._autoDiscoverFunction);
 
 }).call(this);
 
 });
 require.alias("component-emitter/index.js", "dropzone/deps/emitter/index.js");
 require.alias("component-emitter/index.js", "emitter/index.js");
-
 if (typeof exports == "object") {
   module.exports = require("dropzone");
 } else if (typeof define == "function" && define.amd) {
