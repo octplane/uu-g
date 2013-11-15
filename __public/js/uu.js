@@ -168,12 +168,19 @@ $(document).ready(function() {
   init: function() {
     this.on("sending", function(file, xhr, formdata) {
       var expiry;
+      $("#gl-but").attr("disabled", "disabled");
+      $("#gl-but").text("Upload in progress");
+
       if($('#never_expire').is(':checked')) {
         formdata.append('never_expire',true);
       } else {
         formdata.append('expiry_delay',$('#expiry_delay').val());
       }
     });
+  },
+  complete: function(file) {
+      //$("#gl-but").removeAttr("disabled");
+      //$("#gl-but").text("Gluu");
   }
 };
 

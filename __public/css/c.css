@@ -24,6 +24,10 @@ label.select {
 label.select:after {
 }
 
+button[disabled] {
+  color: rgb(153, 153, 153);
+}
+
 select, button{
   cursor: pointer;
   text-decoration:none;
