@@ -157,7 +157,7 @@ func (at *FsResolver) GetNextIdentifierWithPrefix(prefix string) (fname string, 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	id := r.Int()
 	for {
-		basename := mnemo.FromInteger(id & 0xFFFFFF)
+		basename := mnemo.FromInteger(id & 0xFFFF)
 		if prefix != "" {
 			basename += "-" + prefix
 		}

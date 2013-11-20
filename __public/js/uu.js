@@ -2,12 +2,14 @@
 var cur_lang;
 var password;
 
+var kName = "x";
+
 function updateHash()
 {
   var hashS ="";
   if(password)
   {
-    hashS = hashS + "clef=" + password;
+    hashS = hashS + kName + "=" + password;
   }
   if(cur_lang)
   {
@@ -50,9 +52,8 @@ var parms = parseHash(window.location.hash.substr(1));
 var password;
 
 function wakeUp() {
-
-  if(parms['clef']) {
-    password = parms['clef'];
+  if(parms[kName] || params["clef"]) {
+    password = parms[kName] || params["clef"];
     var data = $('#encrypted').text();
     var atts = $('#attachments').text();
 
@@ -81,7 +82,7 @@ function RNGisReady() {
   $('#gl-but').removeAttr("disabled");
   $('#gl-text').text("");
   if(!password)
-    password = generatePassword(16);
+    password = generatePassword(6);
 
 }
 
@@ -138,7 +139,7 @@ $(document).ready(function() {
       url: "/paste",
       data: sent_data
     }).done(function( dest_url ) {
-      document.location.href = dest_url + "#clef="+password;
+      document.location.href = dest_url + "#" + kName + "=" + password;
     }).fail(function(jqXHR, textStatus) {
       console.log( "Request failed: " + textStatus );
     });
@@ -179,8 +180,8 @@ $(document).ready(function() {
     });
   },
   complete: function(file) {
-      //$("#gl-but").removeAttr("disabled");
-      //$("#gl-but").text("Gluu");
+      $("#gl-but").removeAttr("disabled");
+      $("#gl-but").text("Gluu");
   }
 };
 
